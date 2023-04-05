@@ -1,43 +1,42 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <pcl/kdtree/kdtree_flann.h>
 #include "Point.h"
 using namespace std;
 
-
-
-
 extern double distance(Point p1, Point p2);
-extern void icp(vector<Point> &source, vector<Point> &target);
+extern void icp(vector<Point>& source, vector<Point>& target);
 
 double distance(Point p1, Point p2)
 {
     return sqrt(pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2) + pow(p1.z - p2.z, 2));
 }
 
-void ICP(vector<Point> &source, vector<Point> &target)
+void ICP(vector<Point>& source, vector<Point>& target)
 {
     int max_iter = 100; // max iterations
     double convergence_criteria = 0.001;
     int size = source.size();
 
-    for (int i = 0; i < max_iter; i++)//iterations 
+    // Create a KD-Tree from the target points
+    pcl::PointCloud<pcl::PointXYZ>::Ptr target_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    for (int i = 0; i < size; i++) {
+        pcl::PointXYZ p(target[i].x, target[i].y, target[i].z);
+        target_cloud->push_back(p);
+    }
+    pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+    kdtree.setInputCloud(target_cloud);
+
+    for (int i = 0; i < max_iter; i++) // iterations
     {
-        
         vector<int> closest_points(size);
-        for (int j = 0; j < size; j++)// find closest points for each point and store it
+        vector<float> distance_squared(size);
+        for (int j = 0; j < size; j++)
         {
-            double min_distance = INFINITY;
-            for (int k = 0; k < size; k++)
-            {
-                double d = distance(source[j], target[k]);
-                if (d < min_distance)
-                {
-                    min_distance = d;
-                    closest_points[j] = k;
-                }
-            }
-        }
+        pcl::PointXYZ search_point(source[j].x, source[j].y, source[j].z);
+        //kdtree.nearestKSearch(search_point, 1, closest_points[j], distance_squared[j]);
+    }
 
         // Compute the transformation to align source with target
         double tx = 0, ty = 0, tz = 0;
