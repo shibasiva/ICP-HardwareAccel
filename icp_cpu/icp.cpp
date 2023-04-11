@@ -19,19 +19,22 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference);
 void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
 {
     int max_iter = 100; // max iterations
-    double convergence_criteria = 0.001;
+    double convergence_criteria = 0.0001;
     float resolution = 128.0; 
 
+    cout<< "reference clouid size: " << reference->points.size()<<endl;
     //Create Octree
     octree::OctreePointCloudSearch<PointXYZ> octree (resolution);
     octree.setInputCloud (reference);
     octree.addPointsFromInputCloud();
 
+    cout<<"octree created" <<endl;
 
-    for (int i = 0; i < max_iter; i++) // iterations
+
+    for (int iter = 0; iter < max_iter; iter++) // iterations
     { 
-        cout<<"iter: "<<i<<endl;
-        cout<<"source cloud size: "<< source->points.size()<<endl;
+        cout<<"iter: "<<iter<<endl;
+        // cout<<"source cloud size: "<< source->points.size()<<endl;
         MatrixXd source_cloud_matrix(3, source->points.size()); //X
         MatrixXd matched_cloud_matrix(3, source->points.size()); //P
 
@@ -42,16 +45,18 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
         for(int index = 0; index < source->points.size(); index++){
             int closest_point_index;
             float closest_point_distance;
-            octree.approxNearestSearch(index, closest_point_index, closest_point_distance); //faster than actual nearest search
+            octree.approxNearestSearch(source->points[index], closest_point_index, closest_point_distance); //faster than actual nearest search
 
             Vector3d source_point(source->points[index].x, source->points[index].y, source->points[index].z);
-            source_cloud_matrix.col(i) = source_point;
+            source_cloud_matrix.col(index) = source_point;
             Vector3d matched_point(reference->points[closest_point_index].x, reference->points[closest_point_index].y, reference->points[closest_point_index].z);
-            matched_cloud_matrix.col(i) = matched_point;
+
+            // cout<<"matched point: " << matched_point << endl;
+            matched_cloud_matrix.col(index) = matched_point;
 
             rms += closest_point_distance;
         }
-        cout<<"found closest points"<<endl;
+        // cout<<"found closest points"<<endl;
 
         rms = sqrt(rms/source->points.size());
         cout<<"rms: " <<rms<<endl;
@@ -59,56 +64,57 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
             cout<<"final rms: " <<rms<<endl;
             break;
         }
+        // cout<<"source cloud matrix" << endl;
+        // cout<<source_cloud_matrix<<endl;
+        // cout<<"matched cloud matrix" <<endl;
+        // cout<<matched_cloud_matrix<<endl;
+
         Vector3d source_center_of_mass = source_cloud_matrix.rowwise().mean();
+        // cout<<source_center_of_mass<<endl;
         source_cloud_matrix = source_cloud_matrix.colwise() - source_center_of_mass; //TODO: check this math: https://stackoverflow.com/questions/42811084/eigen-subtracting-vector-from-matrix-columns
         
         Vector3d matched_center_of_mass = matched_cloud_matrix.rowwise().mean();
+        // cout<<matched_center_of_mass<<endl;
         matched_cloud_matrix = matched_cloud_matrix.colwise() - matched_center_of_mass; //TODO: check this math
-
-        cout<<"found center of masses"<<endl;
+        // cout<<"found center of masses"<<endl;
 
         //compute dxd matrix of covariances W
         Matrix3d covariances = Matrix3d::Zero();
-        for(int i = 0; i < source->points.size(); i++){
-            covariances = covariances + (source_cloud_matrix.col(i) * matched_cloud_matrix.col(i).transpose());
+        for(int col = 0; col < source->points.size(); col++){
+            covariances = covariances + (source_cloud_matrix.col(col) * matched_cloud_matrix.col(col).transpose());
         }
 
-        cout<<"found W"<<endl;
+        // cout<<covariances<<endl;
         // cout<<covariances.rows()<<endl;
         // cout<<covariances.cols()<<endl;
 
         //compute singular value decomposition U and V
         JacobiSVD<MatrixXd> svd; //this is different from the documentation, likely due to a bug: https://stackoverflow.com/questions/72749955/unable-to-compile-the-example-for-eigen-svd
         svd.compute(covariances, ComputeThinU | ComputeThinV);
-        cout<<"found U and V"<<endl;
+        // cout<<"found U and V"<<endl;
 
         //compute rotation and translation
-        Matrix3d rotation = svd.matrixU() * svd.matrixV().transpose();
+        Matrix3d rotation = svd.matrixU() * (svd.matrixV().transpose());
         Vector3d translation = source_center_of_mass - rotation * matched_center_of_mass;
 
         //create transform
         Matrix4d transform = Matrix4d::Identity();
-        transform.block<3,3>(0,0) = rotation;
-        transform.block<3,1>(0,3) = translation;
+        transform.block<3,3>(0,0) = rotation.transpose();
+        transform.block<3,1>(0,3) = -translation;
 
-        cout<<"found transform"<<endl;
-
+        // cout<<"found transform"<<endl;
+        // cout<<transform<<endl;
         //apply transform
         transformPointCloud (*source, *source, transform); //TODO: check if this is actually correct
-        cout<<"applied transform"<<endl;
-
-        // Check for convergence; if rms is lower than convergence than break
-        // double rms_error = 0;
-        // for (int j = 0; j < size; j++)
-        // {
-        //     rms_error += pow(distance(source[j], target[closest_points[j]]), 2);
-        // }
-        // rms_error = sqrt(rms_error / size);
-        // if (rms_error < convergence_criteria)
-        // {
-        //     break;
-        // }
+        // cout<<"applied transform"<<endl;
     }
+
+    //write result as pcd
+    *source += *reference;
+
+    pcl::io::savePCDFileASCII ("result.pcd", *source);
+
+    cout<<"saved ICP-CPU output to result.pcd"<<endl;
 }
 
 int main(int argc, char** argv)
