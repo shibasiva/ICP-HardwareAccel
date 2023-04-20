@@ -1,0 +1,2 @@
+/usr/bin/ar qc libicp_gpu_lib.a CMakeFiles/icp_gpu_lib.dir/icp.cu.o
+/usr/bin/ranlib libicp_gpu_lib.a

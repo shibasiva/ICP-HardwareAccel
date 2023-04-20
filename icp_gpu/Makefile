@@ -67,8 +67,8 @@ CMAKE_BINARY_DIR = /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
-	/usr/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
+	/usr/bin/ccmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -129,29 +129,29 @@ icp_gpu/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/icp_gpu.dir/build.make CMakeFiles/icp_gpu.dir/build
 .PHONY : icp_gpu/fast
 
-icp.o: icp.cpp.o
+icp.o: icp.cu.o
 .PHONY : icp.o
 
 # target to build an object file
-icp.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/icp_gpu.dir/build.make CMakeFiles/icp_gpu.dir/icp.cpp.o
-.PHONY : icp.cpp.o
+icp.cu.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/icp_gpu.dir/build.make CMakeFiles/icp_gpu.dir/icp.cu.o
+.PHONY : icp.cu.o
 
-icp.i: icp.cpp.i
+icp.i: icp.cu.i
 .PHONY : icp.i
 
 # target to preprocess a source file
-icp.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/icp_gpu.dir/build.make CMakeFiles/icp_gpu.dir/icp.cpp.i
-.PHONY : icp.cpp.i
+icp.cu.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/icp_gpu.dir/build.make CMakeFiles/icp_gpu.dir/icp.cu.i
+.PHONY : icp.cu.i
 
-icp.s: icp.cpp.s
+icp.s: icp.cu.s
 .PHONY : icp.s
 
 # target to generate assembly for a file
-icp.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/icp_gpu.dir/build.make CMakeFiles/icp_gpu.dir/icp.cpp.s
-.PHONY : icp.cpp.s
+icp.cu.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/icp_gpu.dir/build.make CMakeFiles/icp_gpu.dir/icp.cu.s
+.PHONY : icp.cu.s
 
 # Help Target
 help:

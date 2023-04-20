@@ -21,6 +21,8 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
     int max_iter = 100; // max iterations
     double convergence_criteria = 0.0001;
     float resolution = 128.0; 
+    Matrix3d total_rotation = Matrix3d::Identity();
+    Vector3d total_translation = Vector3d::Zero();
 
     cout<< "reference clouid size: " << reference->points.size()<<endl;
     //Create Octree
@@ -45,12 +47,14 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
         for(int index = 0; index < source->points.size(); index++){
             int closest_point_index;
             float closest_point_distance;
-            octree.approxNearestSearch(source->points[index], closest_point_index, closest_point_distance); //faster than actual nearest search
+            Vector3d search_point (source->points[index].x, source->points[index].y, source->points[index].z);
+            Vector3d transformed_point = total_rotation * search_point + total_translation;
+            PointXYZ transformed_pointXYZ = PointXYZ(transformed_point(0), transformed_point(1), transformed_point(2));
+            octree.approxNearestSearch(transformed_pointXYZ, closest_point_index, closest_point_distance); //faster than actual nearest search
 
-            Vector3d source_point(source->points[index].x, source->points[index].y, source->points[index].z);
+            Vector3d source_point(transformed_pointXYZ.x, transformed_pointXYZ.y, transformed_pointXYZ.z);
             source_cloud_matrix.col(index) = source_point;
             Vector3d matched_point(reference->points[closest_point_index].x, reference->points[closest_point_index].y, reference->points[closest_point_index].z);
-
             // cout<<"matched point: " << matched_point << endl;
             matched_cloud_matrix.col(index) = matched_point;
 
@@ -97,18 +101,16 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
         Matrix3d rotation = svd.matrixU() * (svd.matrixV().transpose());
         Vector3d translation = source_center_of_mass - rotation * matched_center_of_mass;
 
-        //create transform
-        Matrix4d transform = Matrix4d::Identity();
-        transform.block<3,3>(0,0) = rotation.transpose();
-        transform.block<3,1>(0,3) = -translation;
-
-        // cout<<"found transform"<<endl;
-        // cout<<transform<<endl;
-        //apply transform
-        transformPointCloud (*source, *source, transform); //TODO: check if this is actually correct
-        // cout<<"applied transform"<<endl;
+        
+        total_rotation *= rotation.transpose();
+        total_translation -= translation;
     }
 
+    //create transform
+    Matrix4d transform = Matrix4d::Identity();
+    transform.block<3,3>(0,0) = total_rotation;
+    transform.block<3,1>(0,3) = total_translation;
+    transformPointCloud (*source, *source, transform);
     //write result as pcd
     *source += *reference;
 

@@ -1,6 +1,13 @@
 {
     "files.associations": {
         "string": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "ostream": "cpp",
+        "initializer_list": "cpp",
+        "string_view": "cpp",
+        "utility": "cpp",
+        "array": "cpp",
+        "list": "cpp",
+        "vector": "cpp"
     }
 }

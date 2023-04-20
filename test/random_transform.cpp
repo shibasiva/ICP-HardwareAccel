@@ -15,15 +15,15 @@ using namespace pcl;
 void random_transform_cloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, string file, string token){
     //https://stackoverflow.com/questions/2704521/generate-random-double-numbers-in-c
     double min_angle_change = 0;
-    double max_angle_change = 2 * M_PI;
+    double max_angle_change = 30 * M_PI / 180;
     uniform_real_distribution<double> unif_angle(min_angle_change, max_angle_change);
     default_random_engine re_angle;
     double roll = unif_angle(re_angle);
     double pitch = unif_angle(re_angle);
     double yaw = unif_angle(re_angle);
 
-    double min_dist_change = 0.2;
-    double max_dist_change = 3.0;
+    double min_dist_change = 0.01;
+    double max_dist_change = 0.2;
     uniform_real_distribution<double> unif_translate(min_dist_change, max_dist_change);
     default_random_engine re_translate;
     double x = unif_translate(re_translate);

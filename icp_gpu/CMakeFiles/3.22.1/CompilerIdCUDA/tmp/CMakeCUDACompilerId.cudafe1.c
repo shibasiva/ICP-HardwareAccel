@@ -796,12 +796,14 @@ extern  __attribute__((__weak__)) /* COMDAT group: _ZNSt14numeric_limitsIeE15tin
 extern  __attribute__((__weak__)) /* COMDAT group: _ZNSt14numeric_limitsIeE11round_styleE */ const enum _ZSt17float_round_style _ZNSt14numeric_limitsIeE11round_styleE __attribute__((visibility("default")));
 # 83 "/usr/include/c++/11/bits/stl_pair.h" 3
 extern  __attribute__((__weak__)) /* COMDAT group: _ZSt19piecewise_construct */ const struct _ZSt21piecewise_construct_t _ZSt19piecewise_construct __attribute__((visibility("default")));
+# 356 "/usr/include/c++/11/utility" 3
+extern  __attribute__((__weak__)) /* COMDAT group: _ZSt8in_place */ const struct _ZSt10in_place_t _ZSt8in_place __attribute__((visibility("default")));
 # 64 "CMakeCUDACompilerId.cu"
 const char *info_compiler = ((const char *)"INFO:compiler[NVIDIA]");
 
 const char *info_simulate = ((const char *)"INFO:simulate[GNU]");
 # 336 "CMakeCUDACompilerId.cu"
-static const char info_version[50] = {((char)73),((char)78),((char)70),((char)79),((char)58),((char)99),((char)111),((char)109),((char)112),((char)105),((char)108),((char)101),((char)114),((char)95),((char)118),((char)101),((char)114),((char)115),((char)105),((char)111),((char)110),((char)91),((char)48),((char)48),((char)48),((char)48),((char)48),((char)48),((char)49),((char)49),((char)46),((char)48),((char)48),((char)48),((char)48),((char)48),((char)48),((char)48),((char)53),((char)46),((char)48),((char)48),((char)48),((char)48),((char)48),((char)49),((char)49),((char)57),((char)93),((char)0)};
+static const char info_version[50] = {((char)73),((char)78),((char)70),((char)79),((char)58),((char)99),((char)111),((char)109),((char)112),((char)105),((char)108),((char)101),((char)114),((char)95),((char)118),((char)101),((char)114),((char)115),((char)105),((char)111),((char)110),((char)91),((char)48),((char)48),((char)48),((char)48),((char)48),((char)48),((char)49),((char)49),((char)46),((char)48),((char)48),((char)48),((char)48),((char)48),((char)48),((char)48),((char)56),((char)46),((char)48),((char)48),((char)48),((char)48),((char)48),((char)48),((char)56),((char)57),((char)93),((char)0)};
 # 365 "CMakeCUDACompilerId.cu"
 static const char info_simulate_version[41] = {((char)73),((char)78),((char)70),((char)79),((char)58),((char)115),((char)105),((char)109),((char)117),((char)108),((char)97),((char)116),((char)101),((char)95),((char)118),((char)101),((char)114),((char)115),((char)105),((char)111),((char)110),((char)91),((char)48),((char)48),((char)48),((char)48),((char)48),((char)48),((char)49),((char)49),((char)46),((char)48),((char)48),((char)48),((char)48),((char)48),((char)48),((char)48),((char)51),((char)93),((char)0)};
 # 385 "CMakeCUDACompilerId.cu"
@@ -1593,3 +1595,5 @@ const char *info_language_extensions_default = ((const char *)"INFO:extensions_d
  __attribute__((__weak__)) /* COMDAT group: _ZNSt14numeric_limitsIeE11round_styleE */ const enum _ZSt17float_round_style _ZNSt14numeric_limitsIeE11round_styleE __attribute__((visibility("default"))) = _ZSt16round_to_nearest;
 # 83 "/usr/include/c++/11/bits/stl_pair.h" 3
  __attribute__((__weak__)) /* COMDAT group: _ZSt19piecewise_construct */ const struct _ZSt21piecewise_construct_t _ZSt19piecewise_construct __attribute__((visibility("default"))) = {};
+# 356 "/usr/include/c++/11/utility" 3
+ __attribute__((__weak__)) /* COMDAT group: _ZSt8in_place */ const struct _ZSt10in_place_t _ZSt8in_place __attribute__((visibility("default"))) = {};
