@@ -19,7 +19,7 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference);
 void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
 {
     int max_iter = 100; // max iterations
-    double convergence_criteria = 0.0001;
+    double convergence_criteria = 0.01;
     float resolution = 128.0; 
     Matrix3d total_rotation = Matrix3d::Identity();
     Vector3d total_translation = Vector3d::Zero();

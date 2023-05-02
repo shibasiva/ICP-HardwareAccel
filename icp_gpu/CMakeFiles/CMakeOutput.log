@@ -772,3 +772,87 @@ int main(void)
   return 0;
 }
 
+Determining if the function XOpenDisplay exists in the /usr/lib/x86_64-linux-gnu/libX11.so;/usr/lib/x86_64-linux-gnu/libXext.so passed with the following output:
+Change Dir: /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_27f76/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_27f76.dir/build.make CMakeFiles/cmTC_27f76.dir/build
+gmake[1]: Entering directory '/home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_27f76.dir/CheckFunctionExists.cxx.o
+/usr/bin/c++   -DCHECK_FUNCTION_EXISTS=XOpenDisplay -o CMakeFiles/cmTC_27f76.dir/CheckFunctionExists.cxx.o -c /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CheckLibraryExists/CheckFunctionExists.cxx
+Linking CXX executable cmTC_27f76
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_27f76.dir/link.txt --verbose=1
+/usr/bin/c++  -DCHECK_FUNCTION_EXISTS=XOpenDisplay CMakeFiles/cmTC_27f76.dir/CheckFunctionExists.cxx.o -o cmTC_27f76  /usr/lib/x86_64-linux-gnu/libX11.so /usr/lib/x86_64-linux-gnu/libXext.so 
+gmake[1]: Leaving directory '/home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function gethostbyname exists passed with the following output:
+Change Dir: /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_13123/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_13123.dir/build.make CMakeFiles/cmTC_13123.dir/build
+gmake[1]: Entering directory '/home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_13123.dir/CheckFunctionExists.cxx.o
+/usr/bin/c++   -DCHECK_FUNCTION_EXISTS=gethostbyname -o CMakeFiles/cmTC_13123.dir/CheckFunctionExists.cxx.o -c /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CheckFunctionExists/CheckFunctionExists.cxx
+Linking CXX executable cmTC_13123
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_13123.dir/link.txt --verbose=1
+/usr/bin/c++  -DCHECK_FUNCTION_EXISTS=gethostbyname CMakeFiles/cmTC_13123.dir/CheckFunctionExists.cxx.o -o cmTC_13123 
+gmake[1]: Leaving directory '/home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function connect exists passed with the following output:
+Change Dir: /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_d68ad/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_d68ad.dir/build.make CMakeFiles/cmTC_d68ad.dir/build
+gmake[1]: Entering directory '/home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_d68ad.dir/CheckFunctionExists.cxx.o
+/usr/bin/c++   -DCHECK_FUNCTION_EXISTS=connect -o CMakeFiles/cmTC_d68ad.dir/CheckFunctionExists.cxx.o -c /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CheckFunctionExists/CheckFunctionExists.cxx
+Linking CXX executable cmTC_d68ad
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d68ad.dir/link.txt --verbose=1
+/usr/bin/c++  -DCHECK_FUNCTION_EXISTS=connect CMakeFiles/cmTC_d68ad.dir/CheckFunctionExists.cxx.o -o cmTC_d68ad 
+gmake[1]: Leaving directory '/home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function remove exists passed with the following output:
+Change Dir: /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_47d91/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_47d91.dir/build.make CMakeFiles/cmTC_47d91.dir/build
+gmake[1]: Entering directory '/home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_47d91.dir/CheckFunctionExists.cxx.o
+/usr/bin/c++   -DCHECK_FUNCTION_EXISTS=remove -o CMakeFiles/cmTC_47d91.dir/CheckFunctionExists.cxx.o -c /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CheckFunctionExists/CheckFunctionExists.cxx
+Linking CXX executable cmTC_47d91
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_47d91.dir/link.txt --verbose=1
+/usr/bin/c++  -DCHECK_FUNCTION_EXISTS=remove CMakeFiles/cmTC_47d91.dir/CheckFunctionExists.cxx.o -o cmTC_47d91 
+gmake[1]: Leaving directory '/home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function shmat exists passed with the following output:
+Change Dir: /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_14bd5/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_14bd5.dir/build.make CMakeFiles/cmTC_14bd5.dir/build
+gmake[1]: Entering directory '/home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_14bd5.dir/CheckFunctionExists.cxx.o
+/usr/bin/c++   -DCHECK_FUNCTION_EXISTS=shmat -o CMakeFiles/cmTC_14bd5.dir/CheckFunctionExists.cxx.o -c /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CheckFunctionExists/CheckFunctionExists.cxx
+Linking CXX executable cmTC_14bd5
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_14bd5.dir/link.txt --verbose=1
+/usr/bin/c++  -DCHECK_FUNCTION_EXISTS=shmat CMakeFiles/cmTC_14bd5.dir/CheckFunctionExists.cxx.o -o cmTC_14bd5 
+gmake[1]: Leaving directory '/home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function IceConnectionNumber exists in the ICE passed with the following output:
+Change Dir: /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_665f4/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_665f4.dir/build.make CMakeFiles/cmTC_665f4.dir/build
+gmake[1]: Entering directory '/home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_665f4.dir/CheckFunctionExists.cxx.o
+/usr/bin/c++   -DCHECK_FUNCTION_EXISTS=IceConnectionNumber -o CMakeFiles/cmTC_665f4.dir/CheckFunctionExists.cxx.o -c /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CheckLibraryExists/CheckFunctionExists.cxx
+Linking CXX executable cmTC_665f4
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_665f4.dir/link.txt --verbose=1
+/usr/bin/c++  -DCHECK_FUNCTION_EXISTS=IceConnectionNumber CMakeFiles/cmTC_665f4.dir/CheckFunctionExists.cxx.o -o cmTC_665f4  -lICE 
+gmake[1]: Leaving directory '/home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles/CMakeTmp'
+
+
+
