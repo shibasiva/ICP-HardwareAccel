@@ -69,113 +69,36 @@ include CMakeFiles/icp_gpu.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/icp_gpu.dir/flags.make
 
-CMakeFiles/icp_gpu.dir/icp.cu.o: CMakeFiles/icp_gpu.dir/flags.make
-CMakeFiles/icp_gpu.dir/icp.cu.o: icp.cu
-CMakeFiles/icp_gpu.dir/icp.cu.o: CMakeFiles/icp_gpu.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CUDA object CMakeFiles/icp_gpu.dir/icp.cu.o"
-	/usr/local/cuda/bin/nvcc -forward-unknown-to-host-compiler $(CUDA_DEFINES) $(CUDA_INCLUDES) $(CUDA_FLAGS) -MD -MT CMakeFiles/icp_gpu.dir/icp.cu.o -MF CMakeFiles/icp_gpu.dir/icp.cu.o.d -x cu -c /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/icp.cu -o CMakeFiles/icp_gpu.dir/icp.cu.o
+CMakeFiles/icp_gpu.dir/icp.cpp.o: CMakeFiles/icp_gpu.dir/flags.make
+CMakeFiles/icp_gpu.dir/icp.cpp.o: icp.cpp
+CMakeFiles/icp_gpu.dir/icp.cpp.o: CMakeFiles/icp_gpu.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/icp_gpu.dir/icp.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/icp_gpu.dir/icp.cpp.o -MF CMakeFiles/icp_gpu.dir/icp.cpp.o.d -o CMakeFiles/icp_gpu.dir/icp.cpp.o -c /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/icp.cpp
 
-CMakeFiles/icp_gpu.dir/icp.cu.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CUDA source to CMakeFiles/icp_gpu.dir/icp.cu.i"
-	$(CMAKE_COMMAND) -E cmake_unimplemented_variable CMAKE_CUDA_CREATE_PREPROCESSED_SOURCE
+CMakeFiles/icp_gpu.dir/icp.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/icp_gpu.dir/icp.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/icp.cpp > CMakeFiles/icp_gpu.dir/icp.cpp.i
 
-CMakeFiles/icp_gpu.dir/icp.cu.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CUDA source to assembly CMakeFiles/icp_gpu.dir/icp.cu.s"
-	$(CMAKE_COMMAND) -E cmake_unimplemented_variable CMAKE_CUDA_CREATE_ASSEMBLY_SOURCE
+CMakeFiles/icp_gpu.dir/icp.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/icp_gpu.dir/icp.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/icp.cpp -o CMakeFiles/icp_gpu.dir/icp.cpp.s
 
 # Object files for target icp_gpu
 icp_gpu_OBJECTS = \
-"CMakeFiles/icp_gpu.dir/icp.cu.o"
+"CMakeFiles/icp_gpu.dir/icp.cpp.o"
 
 # External object files for target icp_gpu
 icp_gpu_EXTERNAL_OBJECTS =
 
-icp_gpu: CMakeFiles/icp_gpu.dir/icp.cu.o
+icp_gpu: CMakeFiles/icp_gpu.dir/icp.cpp.o
 icp_gpu: CMakeFiles/icp_gpu.dir/build.make
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpcl_apps.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpcl_outofcore.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpcl_people.so
-icp_gpu: /usr/lib/libOpenNI.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libusb-1.0.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libOpenNI2.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libusb-1.0.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libflann_cpp.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpcl_surface.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpcl_keypoints.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpcl_tracking.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpcl_recognition.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpcl_registration.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpcl_stereo.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpcl_segmentation.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpcl_features.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpcl_filters.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpcl_sample_consensus.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpcl_ml.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpcl_visualization.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpcl_search.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpcl_kdtree.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpcl_io.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpcl_octree.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpng.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libz.so
-icp_gpu: /usr/lib/libOpenNI.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libusb-1.0.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libOpenNI2.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkChartsCore-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkInteractionImage-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkIOGeometry-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libjsoncpp.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkIOPLY-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkRenderingLOD-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkViewsContext2D-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkViewsCore-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkGUISupportQt-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkInteractionWidgets-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkFiltersModeling-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkInteractionStyle-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkFiltersExtraction-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkIOLegacy-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkIOCore-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkRenderingAnnotation-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkRenderingContext2D-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkRenderingFreeType-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libfreetype.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkImagingSources-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkIOImage-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkImagingCore-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkRenderingOpenGL2-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkRenderingUI-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkRenderingCore-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkCommonColor-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkFiltersGeometry-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkFiltersSources-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkFiltersGeneral-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkCommonComputationalGeometry-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkFiltersCore-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkCommonExecutionModel-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkCommonDataModel-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkCommonMisc-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkCommonTransforms-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkCommonMath-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkkissfft-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libGLEW.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libX11.so
-icp_gpu: /usr/lib/x86_64-linux-gnu/libQt5OpenGL.so.5.15.3
-icp_gpu: /usr/lib/x86_64-linux-gnu/libQt5Widgets.so.5.15.3
-icp_gpu: /usr/lib/x86_64-linux-gnu/libQt5Gui.so.5.15.3
-icp_gpu: /usr/lib/x86_64-linux-gnu/libQt5Core.so.5.15.3
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtkCommonCore-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libtbb.so.12.5
-icp_gpu: /usr/lib/x86_64-linux-gnu/libvtksys-9.1.so.9.1.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libpcl_common.so
+icp_gpu: /usr/local/lib/libpcl_common.so
 icp_gpu: /usr/lib/x86_64-linux-gnu/libboost_system.so.1.74.0
 icp_gpu: /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.74.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libboost_date_time.so.1.74.0
 icp_gpu: /usr/lib/x86_64-linux-gnu/libboost_iostreams.so.1.74.0
 icp_gpu: /usr/lib/x86_64-linux-gnu/libboost_serialization.so.1.74.0
-icp_gpu: /usr/lib/x86_64-linux-gnu/libqhull_r.so.8.0.2
 icp_gpu: CMakeFiles/icp_gpu.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CUDA executable icp_gpu"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable icp_gpu"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/icp_gpu.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
