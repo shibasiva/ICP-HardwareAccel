@@ -129,6 +129,30 @@ icp_cpu/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/icp_cpu.dir/build.make CMakeFiles/icp_cpu.dir/build
 .PHONY : icp_cpu/fast
 
+edge.o: edge.cpp.o
+.PHONY : edge.o
+
+# target to build an object file
+edge.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/icp_cpu.dir/build.make CMakeFiles/icp_cpu.dir/edge.cpp.o
+.PHONY : edge.cpp.o
+
+edge.i: edge.cpp.i
+.PHONY : edge.i
+
+# target to preprocess a source file
+edge.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/icp_cpu.dir/build.make CMakeFiles/icp_cpu.dir/edge.cpp.i
+.PHONY : edge.cpp.i
+
+edge.s: edge.cpp.s
+.PHONY : edge.s
+
+# target to generate assembly for a file
+edge.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/icp_cpu.dir/build.make CMakeFiles/icp_cpu.dir/edge.cpp.s
+.PHONY : edge.cpp.s
+
 icp.o: icp.cpp.o
 .PHONY : icp.o
 
@@ -162,6 +186,9 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... icp_cpu"
+	@echo "... edge.o"
+	@echo "... edge.i"
+	@echo "... edge.s"
 	@echo "... icp.o"
 	@echo "... icp.i"
 	@echo "... icp.s"

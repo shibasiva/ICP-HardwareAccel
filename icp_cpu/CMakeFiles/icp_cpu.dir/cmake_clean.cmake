@@ -1,4 +1,6 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/icp_cpu.dir/edge.cpp.o"
+  "CMakeFiles/icp_cpu.dir/edge.cpp.o.d"
   "CMakeFiles/icp_cpu.dir/icp.cpp.o"
   "CMakeFiles/icp_cpu.dir/icp.cpp.o.d"
   "icp_cpu"

@@ -15,11 +15,11 @@ using namespace pcl;
 //map the source onto the reference
 void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference);
 //edge detection
-void edge_detection(PointCloud<PointXYZ>::Ptr reference, PointCloud<PointXYZ>::Ptr edgePoints, int k, double lambda);
+void edge_detection_test(PointCloud<PointXYZ>::Ptr reference, PointCloud<PointXYZ>::Ptr edgePoints, int k, double lambda);
 
 
 
-void edge_detection(PointCloud<PointXYZ>::Ptr reference, PointCloud<PointXYZ>::Ptr edgePoints, int k, double lambda)
+void edge_detection_test(PointCloud<PointXYZ>::Ptr reference, PointCloud<PointXYZ>::Ptr edgePoints, int k, double lambda)
 {
     for(int i=0; i<reference->points.size(); i++){
         vector<int> indices(k);
@@ -171,7 +171,7 @@ int main(int argc, char** argv)
         }
         PointCloud<PointXYZ>::Ptr edges (new PointCloud<PointXYZ>);
 
-        edge_detection(reference, edges, 20, 0.5); // 20 nearest neighbors and 0.5 lambda
+        edge_detection_test(reference, edges, 20, 0.5); // 20 nearest neighbors and 0.5 lambda
 
         ICP(source, reference);
         
