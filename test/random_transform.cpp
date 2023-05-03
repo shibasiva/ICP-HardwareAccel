@@ -14,6 +14,7 @@ using namespace pcl;
 
 void random_transform_cloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, string file, string token){
     //https://stackoverflow.com/questions/2704521/generate-random-double-numbers-in-c
+    cout << cloud->points.size()<<endl;
     double min_angle_change = 0;
     double max_angle_change = 30 * M_PI / 180;
     uniform_real_distribution<double> unif_angle(min_angle_change, max_angle_change);
@@ -49,11 +50,12 @@ void random_transform_cloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, string fi
     //apply transform
     transformPointCloud (*cloud, *cloud, transform); //TODO: check if this is actually correct
 
-    //https://stackoverflow.com/questions/14265581/parse-split-a-string-in-c-using-string-delimiter-standard-c
-    string filename = file.substr(0, file.find("."));
-    string extension = file.substr(file.find(".") + 1);
+    //https://stackoverflow.com/questions/14265581/parse-split-a-string-in-c-using-string-delimiter-standard-c  
+    string filename = file.substr(0, file.find(".pcd"));
+    string extension = file.substr(file.find(".pcd") + 1);
 
     string result = filename + token + "."  + extension;
+    cout<<result<<endl;
     pcl::io::savePCDFileASCII (result, *cloud);
 
     cout<<"saved ICP-CPU output to " << result <<endl;

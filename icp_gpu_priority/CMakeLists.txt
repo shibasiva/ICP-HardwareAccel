@@ -1,0 +1,19 @@
+cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+set(CMAKE_CPP_COMPILER g++)
+set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
+set(CUDA_FIND_QUIETLY TRUE) 
+project(ICP_HARDWARE_ACCEL LANGUAGES CUDA CXX)
+find_package(PCL 1.3 REQUIRED COMPONENTS common io)
+find_package(CUDA REQUIRED)
+include_directories("${CUDA_INCLUDE_DIRS}")
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+
+
+
+# set_source_files_properties(icp.cpp PROPERTIES LANGUAGE CUDA)
+add_executable(icp_gpu_priority icp.cu)
+set_target_properties(icp_gpu_priority PROPERTIES CUDA_ARCHITECTURES "60;61;62")
+target_link_directories(icp_gpu_priority PUBLIC "${CMAKE_CURRENT_LIST_DIR}/cuPCL/cuOctree/lib/")
+target_link_libraries(icp_gpu_priority ${PCL_LIBRARIES} cudaoctree)

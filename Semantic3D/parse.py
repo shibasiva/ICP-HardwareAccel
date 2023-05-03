@@ -42,8 +42,9 @@ def main ():
     points = panda_points[['x', 'y', 'z']].values
     pcd = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(points))
 
-    # save point cloud to pcd file
-    o3d.io.write_point_cloud("output.pcd", pcd)
+    # save point cloud to pcd file 
+    name = sys.argv[1].split(".txt")[0]
+    o3d.io.write_point_cloud(name + ".pcd", pcd)
 
 
 main()

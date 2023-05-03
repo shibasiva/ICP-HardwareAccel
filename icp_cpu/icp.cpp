@@ -2,6 +2,7 @@
 #include <vector>
 #include <cmath>
 #include <list>
+#include <chrono>
 #include <Eigen/Dense>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
@@ -18,13 +19,21 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference);
 //map the source onto the reference
 void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
 {
+    chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
+    chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
+    chrono::duration<double, std::ratio<1, 1000>> time_span =
+    chrono::duration_cast<chrono::duration<double, ratio<1, 1000>>>(t2 - t1);
+
     int max_iter = 100; // max iterations
     double convergence_criteria = 0.01;
     float resolution = 128.0; 
     Matrix3d total_rotation = Matrix3d::Identity();
     Vector3d total_translation = Vector3d::Zero();
 
-    cout<< "reference clouid size: " << reference->points.size()<<endl;
+    cout<< "reference cloud size: " << reference->points.size()<<endl;
+
+    t1 = chrono::steady_clock::now();
+
     //Create Octree
     octree::OctreePointCloudSearch<PointXYZ> octree (resolution);
     octree.setInputCloud (reference);
@@ -32,7 +41,7 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
 
     cout<<"octree created" <<endl;
 
-
+    
     for (int iter = 0; iter < max_iter; iter++) // iterations
     { 
         cout<<"iter: "<<iter<<endl;
@@ -105,18 +114,24 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
         total_rotation *= rotation.transpose();
         total_translation -= translation;
     }
+    t2 = chrono::steady_clock::now();
+
+    time_span = chrono::duration_cast<chrono::duration<double, ratio<1, 1000>>>(t2 - t1);
+    cout << "ICP-CPU costs : " << time_span.count() << " ms."<< endl;
 
     //create transform
     Matrix4d transform = Matrix4d::Identity();
     transform.block<3,3>(0,0) = total_rotation;
     transform.block<3,1>(0,3) = total_translation;
     transformPointCloud (*source, *source, transform);
-    //write result as pcd
+
+    /*
+    //write result as pcd, for testing with small pcd files
     *source += *reference;
-
     pcl::io::savePCDFileASCII ("result.pcd", *source);
-
     cout<<"saved ICP-CPU output to result.pcd"<<endl;
+    */
+    
 }
 
 int main(int argc, char** argv)

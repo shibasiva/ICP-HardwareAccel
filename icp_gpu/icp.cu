@@ -3,7 +3,9 @@
 #include <cmath>
 #include <list>
 #include <Eigen/Dense>
+#include <stdexcept>
 #include <stdio.h>
+#include <chrono>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -29,6 +31,8 @@ using namespace std;
 using namespace Eigen;
 using namespace pcl;
 
+tuple<vector<int>, VectorXf, int> RunCUDAOctreeSearch(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference);
+vector<PointCloud<PointXYZ>::Ptr> DivideIntoChunks(PointCloud<PointXYZ>::Ptr cloud, int chunkSize);
 void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference);
 
 void GetInfo(void)
@@ -55,49 +59,52 @@ void GetInfo(void)
     printf("\n");
 }
 
-// __global__ 
-// void NearestNeighborSearch(vector<PointXYZ>* search_cloud, octree::OctreePointCloudSearch<PointXYZ>* octree, MatrixXd* result)
-// {
-//     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    
-//     int closest_point_index;
-//     float closest_point_distance;
-//     octree->approxNearestSearch((*search_cloud)[idx], closest_point_index, closest_point_distance);  
-//     result->col(idx) = Vector2d(closest_point_index, closest_point_distance);
-//     return;
-// }
+vector<PointCloud<PointXYZ>::Ptr> DivideIntoChunks(PointCloud<PointXYZ>::Ptr cloud, int chunk_size){
+    vector<PointCloud<PointXYZ>::Ptr> blocks;
 
-//map the source onto the reference
-void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
-{
-    int max_iter = 100; // max iterations
-    double convergence_criteria = 0.01;
-    // float resolution = 128.0; 
+    int division_begin = 0;
+    int points_per_division = chunk_size;
+    int data_divisions = 0;
 
-    Matrix3d total_rotation = Matrix3d::Identity();
-    Vector3d total_translation = Vector3d::Zero();
+    if(cloud->points.size() < chunk_size){ //if less than chunk_size points, just load onto GPU all at once
+        data_divisions = 1;
+    }
+    else{
+        data_divisions = (cloud->points.size() / chunk_size) + 1; //handle chunk_size points at a time on the
+    }
 
-    for (int iter = 0; iter < max_iter; iter++) // iterations
-    { 
-        cout<<"iter: "<<iter<<endl;
-        // cout<<"source cloud size: "<< source->points.size()<<endl;
-        MatrixXd source_cloud_matrix(3, source->points.size()); //X
-        MatrixXd matched_cloud_matrix(3, source->points.size()); //P
+    // cout<<"chunk size: " << chunk_size<<endl;
+    // cout<<"divisions: " << data_divisions<<endl;
+    // cout<<"points per division: " << points_per_division<<endl;
+    for(int i = 0; i < data_divisions; i++){
+        if(i == data_divisions - 1){
+            points_per_division = cloud->points.size() - division_begin;
+        }
+           
+        PointCloud<PointXYZ>::Ptr cloud_temp_block(new PointCloud<PointXYZ>);
+        for(int j = 0; j < points_per_division; j++){
+            cloud_temp_block->points.push_back(cloud->points[division_begin + j]);
+        }
+        blocks.push_back(cloud_temp_block);
+        division_begin += points_per_division;
+    }
+    return blocks;
 
-        //for every point in the source, find the closest point in the reference
-        //calculate the center of mass
-        //break if rms is low enough
-        
-        //following from this code: https://github.com/NVIDIA-AI-IOT/cuPCL/blob/main/cuOctree/main.cpp
+}
+
+//following from this code: https://github.com/NVIDIA-AI-IOT/cuPCL/blob/main/cuOctree/main.cpp
+tuple<vector<int>, VectorXf, int> RunCUDAOctreeSearch(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference){     
         cudaStream_t stream = NULL;
         cudaStreamCreate ( &stream );
         
-        unsigned int nCount = source->width * source->height;
-        float *inputData = (float *)source->points.data();
+        unsigned int nDstCount = source->points.size();
+        float *outputData = (float *)source->points.data();
 
-        unsigned int nDstCount = reference->width * reference->height;
-        float *outputData = (float *)reference->points.data();
+        unsigned int nCount = reference->points.size();
+        float *inputData = (float *)reference->points.data();
 
+        // cout<<"nDstCount: " <<nDstCount << endl;
+        // cout<<"nCount: " <<nCount << endl;
         float *input = NULL;//points cloud source which be searched
         cudaMallocManaged(&input, sizeof(float) * 4 * nCount, cudaMemAttachHost);
         cudaStreamAttachMemAsync (stream, input);
@@ -118,7 +125,7 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
 
         unsigned int *selectedCount = NULL;//count of points selected
         checkCudaErrors(cudaMallocManaged(&selectedCount, sizeof(unsigned int)*nDstCount, cudaMemAttachHost));
-        checkCudaErrors(cudaStreamAttachMemAsync(stream, selectedCount) );
+        checkCudaErrors(cudaStreamAttachMemAsync(stream, selectedCount));
         checkCudaErrors(cudaMemsetAsync(selectedCount, 0, sizeof(unsigned int)*nDstCount, stream));
 
         int *index = NULL;//index selected by search
@@ -141,11 +148,6 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
         cudaMemsetAsync(selectedCount, 0, sizeof(unsigned int), stream);
         cudaStreamSynchronize(stream);
 
-        cudaMemsetAsync(index, 0, sizeof(unsigned int), stream);
-        cudaMemsetAsync(distance, 0xFF, sizeof(unsigned int), stream);
-        cudaMemsetAsync(selectedCount, 0, sizeof(unsigned int), stream);
-        cudaStreamSynchronize(stream);
-
         int *pointIdxANSearch = index;
         float *pointANSquaredDistance = distance;
         int status = 0;
@@ -157,36 +159,123 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
 
         cudaDeviceSynchronize();
 
-        // cout<<"did all the cuda stuff"<<endl;
-        if (status != 0){
-            cerr<<"Failed to find approx nearest search"<<endl;
-            return;
-        } 
-        double rms = 0.0;
-        for(int i = 0; i < *selectedCount; i ++) {
-            rms += ( *(((unsigned int*)pointANSquaredDistance) + i) )/1e9;
+        if(status != 0){
+            throw invalid_argument( "CUDA octree failed" );
         }
 
-        rms = sqrt(rms/(*selectedCount));
-        cout<<"rms: " <<rms<<endl;
+        vector<int> indices;
+        VectorXf distances(*selectedCount);
+        int count = *selectedCount;
+        for(int i = 0; i < *selectedCount; i++){
+            indices.push_back(*(((unsigned int*)pointIdxANSearch) + i));
+            distances(i) = *(((unsigned int*)pointANSquaredDistance) + i);
+        }
+
+        cudaFree(search);
+        cudaFree(index);
+        cudaFree(input);
+        cudaFree(output);
+        cudaFree(distance);
+        cudaFree(selectedCount);
+        cudaStreamDestroy(stream);
+
+        return {indices, distances, count};
+}
+
+//map the source onto the reference
+void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
+{   
+    cout<<"source points: " << source->points.size() << endl;
+    cout<<"reference points: " << reference->points.size() <<endl;
+    int max_iter = 100; // max iterations
+    double convergence_criteria = 0.003;
+    // float resolution = 128.0; 
+    const int MAX_POINTS_PER_DIVISION = 10000;
+    
+    vector<PointCloud<PointXYZ>::Ptr> reference_blocks = DivideIntoChunks(reference, MAX_POINTS_PER_DIVISION);
+    // for(auto a: reference_blocks){
+    //     cout<<"size: " << a->points.size()<<endl;
+    // }
+    // Matrix3d total_rotation = Matrix3d::Identity();
+    // Vector3d total_translation = Vector3d::Zero();
+
+    std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+    std::chrono::duration<double, std::ratio<1, 1000>> time_span =
+    std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1, 1000>>>(t2 - t1);
+
+    t1 = std::chrono::steady_clock::now();
+
+    //following from this code: https://github.com/NVIDIA-AI-IOT/cuPCL/blob/main/cuOctree/main.cpp
+    // cout<<"finished dividing the point clouds"<<endl;
+
+    for (int iter = 0; iter < max_iter; iter++) // iterations
+    { 
+        cout<<"iter: "<<iter<<endl;
+        // cout<<"source cloud size: "<< source->points.size()<<endl;
+        MatrixXd source_cloud_matrix(3, source->points.size()); //X
+        MatrixXd matched_cloud_matrix(3, source->points.size()); //P
+        float rms = 0.0;
+        vector<int*> best_indices_container;
+        vector<PointCloud<PointXYZ>::Ptr> source_blocks = DivideIntoChunks(source, MAX_POINTS_PER_DIVISION);
+        // cout<<"source blocks: " << source_blocks.size()<<endl;
+        // cout<<"analyzing blocks"<<endl;
+        for(int source_block_num = 0; source_block_num < source_blocks.size(); source_block_num++){
+            bool first_pass = true;
+            int* best_indices = new int[source_blocks[source_block_num]->points.size()];
+            int* best_index_block = new int[source_blocks[source_block_num]->points.size()];
+            VectorXf best_distances(source_blocks[source_block_num]->points.size());
+
+            for(int reference_block_num = 0; reference_block_num < reference_blocks.size(); reference_block_num++){
+                // cout<<"calling cudaOctree"<<endl;
+                auto [indices, distances, count] = RunCUDAOctreeSearch(source_blocks[source_block_num], reference_blocks[reference_block_num]);
+                // cout<<"cudaOctree done"<<endl;
+                for(int c = 0; c < count; c++){
+                    // cout<<"got matched index and distance"<<endl;
+                    if(first_pass){
+                        best_indices[c] = indices[c];
+                        best_distances(c) = distances(c);
+                        best_index_block[c] = reference_block_num;
+                    }
+                    else{
+                        if(distances(c) < best_distances(c)){
+                            best_indices[c] = indices[c];
+                            best_distances(c) = distances(c);
+                            best_index_block[c] = reference_block_num;
+                        }
+                    }
+                }
+                first_pass = false;
+                // cout<<"reference block analyzed: " << reference_block_num<<endl;
+            }
+
+            for(int index = 0; index < source_blocks[source_block_num]->points.size(); index++){
+                // cout<<"block size: " << source_blocks[source_block_num]->points.size() <<  endl;
+                // cout<<"matched point matrix size: " << matched_cloud_matrix.cols() << endl;
+                // cout<<"starting at: " << source_block_num * points_per_division << endl;
+                // cout<<"full_index at: " << source_block_num * points_per_division + index << endl;
+                int full_index = source_block_num * MAX_POINTS_PER_DIVISION + index;
+                Vector3d source_point (source->points[full_index].x, source->points[full_index].y, source->points[full_index].z);
+                source_cloud_matrix.col(full_index) = source_point;
+
+                // cout<<"matched index: " << best_index_block[index] * MAX_POINTS_PER_DIVISION + best_indices[index] << endl;
+                int matched_index = best_index_block[index] * MAX_POINTS_PER_DIVISION + best_indices[index];
+                Vector3d matched_point (reference->points[matched_index].x, reference->points[matched_index].y, reference->points[matched_index].z);
+                // cout <<"matched index worked"<<endl;
+                matched_cloud_matrix.col(full_index) = matched_point;
+            }
+            // cout<<"added to matrix"<<endl;
+            rms += best_distances.sum();
+        }
+        
+        rms /= source->points.size();
+        cout<<"rms: " << rms << endl;
         if(rms < convergence_criteria){
             cout<<"final rms: " <<rms<<endl;
             break;
         }
-        // cout<<"source cloud matrix" << endl;
-        // cout<<source_cloud_matrix<<endl;
-        // cout<<"matched cloud matrix" <<endl;
-        // cout<<matched_cloud_matrix<<endl;
-
-        for(int i = 0; i < *selectedCount; i++){
-            Vector3d source_point (source->points[i].x, source->points[i].y, source->points[i].z);
-            source_cloud_matrix.col(i) = source_point;
-
-            int matched_index = *(((unsigned int*)pointIdxANSearch) + i);
-            Vector3d matched_point (reference->points[matched_index].x, reference->points[matched_index].y, reference->points[matched_index].z);
-            matched_cloud_matrix.col(i) = matched_point;
-        }
-
+        
+        // cout<<"regular ICP now"<<endl;
         Vector3d source_center_of_mass = source_cloud_matrix.rowwise().mean();
         // cout<<source_center_of_mass<<endl;
         source_cloud_matrix = source_cloud_matrix.colwise() - source_center_of_mass; //TODO: check this math: https://stackoverflow.com/questions/42811084/eigen-subtracting-vector-from-matrix-columns
@@ -225,11 +314,17 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
         transform.block<3,1>(0,3) = -translation;
         transformPointCloud (*source, *source, transform);
     }
+
+    t2 = std::chrono::steady_clock::now();
+    time_span = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1, 1000>>>(t2 - t1);
+    std::cout << "CUDA costs : " << time_span.count() << " ms."<< std::endl;
+    // cudaFree(input);
+    // cudaStreamDestroy(stream);
     //write result as pcd
     *source += *reference;
     pcl::io::savePCDFileASCII ("result.pcd", *source);
 
-    cout<<"saved ICP-CPU output to result.pcd"<<endl;
+    cout<<"saved ICP-GPU output to result.pcd"<<endl;
 }
 
 int main(int argc, char** argv){
