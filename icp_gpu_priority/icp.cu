@@ -21,6 +21,17 @@ extern "C"{
     #include "./cuPCL/cuOctree/lib/cudaOctree.h"
 }
 
+//https://stackoverflow.com/questions/14038589/what-is-the-canonical-way-to-check-for-errors-using-the-cuda-runtime-api
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess) 
+   {
+      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) exit(code);
+   }
+}
+
 
 // #pragma diag_suppress 20012
 // add in cmd to supress eigen warnings
@@ -76,6 +87,22 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
 
     Matrix3d total_rotation = Matrix3d::Identity();
     Vector3d total_translation = Vector3d::Zero();
+    //following from this code: https://github.com/NVIDIA-AI-IOT/cuPCL/blob/main/cuOctree/main.cpp
+    cudaStream_t stream = NULL;
+    cudaStreamCreate ( &stream );
+
+            
+    unsigned int nCount = reference->width * reference->height;
+    float *inputData = (float *)reference->points.data();
+    
+    float *input = NULL;//points cloud source which be searched
+    cudaMallocManaged(&input, sizeof(float) * 4 * nCount, cudaMemAttachHost);
+    cudaStreamAttachMemAsync (stream, input);
+    cudaMemcpyAsync(input, inputData, sizeof(float) * 4 * nCount, cudaMemcpyHostToDevice, stream);
+    cudaStreamSynchronize(stream);
+
+    float resolution = 0.03f;
+    cudaTree treeTest(input, nCount, resolution, stream);
 
     for (int iter = 0; iter < max_iter; iter++) // iterations
     { 
@@ -88,27 +115,15 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
         //calculate the center of mass
         //break if rms is low enough
         
-        //following from this code: https://github.com/NVIDIA-AI-IOT/cuPCL/blob/main/cuOctree/main.cpp
-        cudaStream_t stream = NULL;
-        cudaStreamCreate ( &stream );
-        
-        unsigned int nCount = source->width * source->height;
-        float *inputData = (float *)source->points.data();
 
-        unsigned int nDstCount = reference->width * reference->height;
-        float *outputData = (float *)reference->points.data();
-
-        float *input = NULL;//points cloud source which be searched
-        cudaMallocManaged(&input, sizeof(float) * 4 * nCount, cudaMemAttachHost);
-        cudaStreamAttachMemAsync (stream, input);
-        cudaMemcpyAsync(input, inputData, sizeof(float) * 4 * nCount, cudaMemcpyHostToDevice, stream);
-        cudaStreamSynchronize(stream);
+        unsigned int nDstCount = source->width * source->height;
+        float *outputData = (float *)source->points.data();
 
         float *output = NULL;// Dst is the targets points
-        cudaMallocManaged(&output, sizeof(float) * 4 *nDstCount, cudaMemAttachHost);
-        cudaStreamAttachMemAsync (stream, output);
-        cudaMemsetAsync(output, 0, sizeof(unsigned int), stream);
-        cudaMemcpyAsync(output, outputData, sizeof(float) * 4 * nDstCount, cudaMemcpyHostToDevice, stream);
+        checkCudaErrors(cudaMallocManaged(&output, sizeof(float) * 4 *nDstCount, cudaMemAttachHost));
+        checkCudaErrors(cudaStreamAttachMemAsync (stream, output));
+        checkCudaErrors(cudaMemsetAsync(output, 0, sizeof(unsigned int), stream));
+        checkCudaErrors(cudaMemcpyAsync(output, outputData, sizeof(float) * 4 * nDstCount, cudaMemcpyHostToDevice, stream));
         cudaStreamSynchronize(stream);
 
         float *search = NULL;//search point (one point)
@@ -133,8 +148,6 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
         cudaMemsetAsync(distance, 0, sizeof(unsigned int), stream);
         cudaStreamSynchronize(stream);
 
-        float resolution = 0.03f;
-        cudaTree treeTest(input, nCount, resolution, stream);
 
         cudaMemsetAsync(index, 0, sizeof(unsigned int), stream);
         cudaMemsetAsync(distance, 0xFF, sizeof(unsigned int), stream);
@@ -148,8 +161,9 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
 
         cudaDeviceSynchronize();
 
+        cout<<"searching tree"<<endl;
         status = treeTest.approxNearestSearch(output, pointIdxANSearch, pointANSquaredDistance, selectedCount);
-
+        cout<<"done searching tree" << endl;
         cudaDeviceSynchronize();
 
         // cout<<"did all the cuda stuff"<<endl;
@@ -181,6 +195,7 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
             Vector3d matched_point (reference->points[matched_index].x, reference->points[matched_index].y, reference->points[matched_index].z);
             matched_cloud_matrix.col(i) = matched_point;
         }
+
 
         Vector3d source_center_of_mass = source_cloud_matrix.rowwise().mean();
         // cout<<source_center_of_mass<<endl;
@@ -219,7 +234,16 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
         transform.block<3,3>(0,0) = rotation.transpose();
         transform.block<3,1>(0,3) = -translation;
         transformPointCloud (*source, *source, transform);
+
+        cudaDeviceSynchronize();
+        cudaFree(search);
+        cudaFree(index);
+        cudaFree(output);
+        cudaFree(distance);
+        cudaFree(selectedCount);
     }
+    cudaFree(input);
+    cudaStreamDestroy(stream);
     //write result as pcd
     *source += *reference;
     pcl::io::savePCDFileASCII ("result.pcd", *source);

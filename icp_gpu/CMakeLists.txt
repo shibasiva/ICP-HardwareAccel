@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-set(CMAKE_CPP_COMPILER g++)
+# set(CMAKE_CPP_COMPILER g++)
 set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
 set(CUDA_FIND_QUIETLY TRUE) 
 project(ICP_HARDWARE_ACCEL LANGUAGES CUDA CXX)
