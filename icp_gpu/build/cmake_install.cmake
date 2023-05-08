@@ -1,4 +1,4 @@
-# Install script for directory: /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu
+# Install script for directory: /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/icp_gpu
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/icp_gpu/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

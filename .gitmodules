@@ -1,0 +1,6 @@
+[submodule "Fast-Robust-ICP"]
+	path = Fast-Robust-ICP
+	url = https://github.com/yaoyx689/Fast-Robust-ICP.git
+[submodule "ICPCUDA"]
+	path = ICPCUDA
+	url = https://github.com/mp3guy/ICPCUDA.git

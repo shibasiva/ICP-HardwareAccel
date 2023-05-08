@@ -260,8 +260,8 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
         // cout<<covariances.cols()<<endl;
 
         //compute singular value decomposition U and V
-        JacobiSVD<MatrixXf, ComputeThinU | ComputeThinV> svd(covariances); 
-        // svd.compute(covariances);
+        JacobiSVD<MatrixXf> svd; //this is different from the documentation, likely due to a bug: https://stackoverflow.com/questions/72749955/unable-to-compile-the-example-for-eigen-svd
+        svd.compute(covariances, ComputeThinU | ComputeThinV);
         // cout<<"found U and V"<<endl;
 
         //compute rotation and translation

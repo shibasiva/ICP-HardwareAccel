@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
+project(ICP_HARDWAREACCEL)
+find_package(PCL 1.3 REQUIRED)
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+add_executable(pcd_to_ply pcl_to_ply.cpp)
+target_link_libraries(pcd_to_ply ${PCL_LIBRARIES})

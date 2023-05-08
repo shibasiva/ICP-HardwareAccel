@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/justinguo01/ha_ws/src/ICP-HardwareAccel/edge_detection
+CMAKE_SOURCE_DIR = /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/edge_detection
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/justinguo01/ha_ws/src/ICP-HardwareAccel/edge_detection/build
+CMAKE_BINARY_DIR = /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/edge_detection/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/find_edges.dir/depend.make
@@ -72,16 +72,16 @@ include CMakeFiles/find_edges.dir/flags.make
 CMakeFiles/find_edges.dir/edge_detection.cpp.o: CMakeFiles/find_edges.dir/flags.make
 CMakeFiles/find_edges.dir/edge_detection.cpp.o: ../edge_detection.cpp
 CMakeFiles/find_edges.dir/edge_detection.cpp.o: CMakeFiles/find_edges.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/justinguo01/ha_ws/src/ICP-HardwareAccel/edge_detection/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/find_edges.dir/edge_detection.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/find_edges.dir/edge_detection.cpp.o -MF CMakeFiles/find_edges.dir/edge_detection.cpp.o.d -o CMakeFiles/find_edges.dir/edge_detection.cpp.o -c /home/justinguo01/ha_ws/src/ICP-HardwareAccel/edge_detection/edge_detection.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/edge_detection/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/find_edges.dir/edge_detection.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/find_edges.dir/edge_detection.cpp.o -MF CMakeFiles/find_edges.dir/edge_detection.cpp.o.d -o CMakeFiles/find_edges.dir/edge_detection.cpp.o -c /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/edge_detection/edge_detection.cpp
 
 CMakeFiles/find_edges.dir/edge_detection.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/find_edges.dir/edge_detection.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/justinguo01/ha_ws/src/ICP-HardwareAccel/edge_detection/edge_detection.cpp > CMakeFiles/find_edges.dir/edge_detection.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/edge_detection/edge_detection.cpp > CMakeFiles/find_edges.dir/edge_detection.cpp.i
 
 CMakeFiles/find_edges.dir/edge_detection.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/find_edges.dir/edge_detection.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/justinguo01/ha_ws/src/ICP-HardwareAccel/edge_detection/edge_detection.cpp -o CMakeFiles/find_edges.dir/edge_detection.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/edge_detection/edge_detection.cpp -o CMakeFiles/find_edges.dir/edge_detection.cpp.s
 
 # Object files for target find_edges
 find_edges_OBJECTS = \
@@ -92,8 +92,8 @@ find_edges_EXTERNAL_OBJECTS =
 
 find_edges: CMakeFiles/find_edges.dir/edge_detection.cpp.o
 find_edges: CMakeFiles/find_edges.dir/build.make
-find_edges: /usr/local/lib/libpcl_io.so
-find_edges: /usr/local/lib/libpcl_kdtree.so
+find_edges: /usr/lib/x86_64-linux-gnu/libpcl_io.so
+find_edges: /usr/lib/x86_64-linux-gnu/libpcl_kdtree.so
 find_edges: /usr/lib/libOpenNI.so
 find_edges: /usr/lib/x86_64-linux-gnu/libusb-1.0.so
 find_edges: /usr/lib/x86_64-linux-gnu/libOpenNI2.so
@@ -104,9 +104,9 @@ find_edges: /usr/lib/x86_64-linux-gnu/libvtkIOGeometry-9.1.so.9.1.0
 find_edges: /usr/lib/x86_64-linux-gnu/libvtkIOPLY-9.1.so.9.1.0
 find_edges: /usr/lib/x86_64-linux-gnu/libvtkRenderingLOD-9.1.so.9.1.0
 find_edges: /usr/lib/x86_64-linux-gnu/libvtkViewsContext2D-9.1.so.9.1.0
-find_edges: /usr/lib/x86_64-linux-gnu/libvtkRenderingContextOpenGL2-9.1.so.9.1.0
 find_edges: /usr/lib/x86_64-linux-gnu/libvtkGUISupportQt-9.1.so.9.1.0
-find_edges: /usr/local/lib/libpcl_octree.so
+find_edges: /usr/lib/x86_64-linux-gnu/libflann_cpp.so
+find_edges: /usr/lib/x86_64-linux-gnu/libpcl_octree.so
 find_edges: /usr/lib/x86_64-linux-gnu/libjsoncpp.so
 find_edges: /usr/lib/x86_64-linux-gnu/libvtkViewsCore-9.1.so.9.1.0
 find_edges: /usr/lib/x86_64-linux-gnu/libvtkInteractionWidgets-9.1.so.9.1.0
@@ -146,17 +146,14 @@ find_edges: /usr/lib/x86_64-linux-gnu/libQt5Core.so.5.15.3
 find_edges: /usr/lib/x86_64-linux-gnu/libvtkCommonCore-9.1.so.9.1.0
 find_edges: /usr/lib/x86_64-linux-gnu/libtbb.so.12.5
 find_edges: /usr/lib/x86_64-linux-gnu/libvtksys-9.1.so.9.1.0
-find_edges: /usr/lib/x86_64-linux-gnu/libpng.so
-find_edges: /usr/lib/x86_64-linux-gnu/libz.so
-find_edges: /usr/local/lib/libpcl_common.so
+find_edges: /usr/lib/x86_64-linux-gnu/libpcl_common.so
 find_edges: /usr/lib/x86_64-linux-gnu/libboost_system.so.1.74.0
 find_edges: /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.74.0
+find_edges: /usr/lib/x86_64-linux-gnu/libboost_date_time.so.1.74.0
 find_edges: /usr/lib/x86_64-linux-gnu/libboost_iostreams.so.1.74.0
 find_edges: /usr/lib/x86_64-linux-gnu/libboost_serialization.so.1.74.0
-find_edges: /usr/local/lib/libflann_cpp.so.1.9.2
-find_edges: /usr/lib/x86_64-linux-gnu/liblz4.so
 find_edges: CMakeFiles/find_edges.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/justinguo01/ha_ws/src/ICP-HardwareAccel/edge_detection/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable find_edges"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/edge_detection/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable find_edges"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/find_edges.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -168,6 +165,6 @@ CMakeFiles/find_edges.dir/clean:
 .PHONY : CMakeFiles/find_edges.dir/clean
 
 CMakeFiles/find_edges.dir/depend:
-	cd /home/justinguo01/ha_ws/src/ICP-HardwareAccel/edge_detection/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/justinguo01/ha_ws/src/ICP-HardwareAccel/edge_detection /home/justinguo01/ha_ws/src/ICP-HardwareAccel/edge_detection /home/justinguo01/ha_ws/src/ICP-HardwareAccel/edge_detection/build /home/justinguo01/ha_ws/src/ICP-HardwareAccel/edge_detection/build /home/justinguo01/ha_ws/src/ICP-HardwareAccel/edge_detection/build/CMakeFiles/find_edges.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/edge_detection/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/edge_detection /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/edge_detection /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/edge_detection/build /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/edge_detection/build /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/edge_detection/build/CMakeFiles/find_edges.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/find_edges.dir/depend
 

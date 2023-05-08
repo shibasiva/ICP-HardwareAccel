@@ -57,18 +57,18 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu_priority
+CMAKE_SOURCE_DIR = /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/icp_gpu_priority
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu_priority/build
+CMAKE_BINARY_DIR = /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/icp_gpu_priority/build
 
 #=============================================================================
 # Targets provided globally by CMake.
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
+	/usr/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu_priority/build/CMakeFiles /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu_priority/build//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/icp_gpu_priority/build/CMakeFiles /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/icp_gpu_priority/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/justinguo01/ha_ws/src/ICP-HardwareAccel/icp_gpu_priority/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/icp_gpu_priority/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -121,12 +121,12 @@ depend:
 
 # Build rule for target.
 icp_gpu_priority: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f -lineinfo CMakeFiles/Makefile2 icp_gpu_priority
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 icp_gpu_priority
 .PHONY : icp_gpu_priority
 
 # fast build rule for target.
 icp_gpu_priority/fast:
-	$(MAKE) $(MAKESILENT) -f -lineinfo CMakeFiles/icp_gpu_priority.dir/build.make CMakeFiles/icp_gpu_priority.dir/build
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/icp_gpu_priority.dir/build.make CMakeFiles/icp_gpu_priority.dir/build
 .PHONY : icp_gpu_priority/fast
 
 icp.o: icp.cu.o
@@ -134,7 +134,7 @@ icp.o: icp.cu.o
 
 # target to build an object file
 icp.cu.o:
-	$(MAKE) $(MAKESILENT) -f -lineinfo CMakeFiles/icp_gpu_priority.dir/build.make CMakeFiles/icp_gpu_priority.dir/icp.cu.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/icp_gpu_priority.dir/build.make CMakeFiles/icp_gpu_priority.dir/icp.cu.o
 .PHONY : icp.cu.o
 
 icp.i: icp.cu.i
@@ -142,7 +142,7 @@ icp.i: icp.cu.i
 
 # target to preprocess a source file
 icp.cu.i:
-	$(MAKE) $(MAKESILENT) -f -lineinfo CMakeFiles/icp_gpu_priority.dir/build.make CMakeFiles/icp_gpu_priority.dir/icp.cu.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/icp_gpu_priority.dir/build.make CMakeFiles/icp_gpu_priority.dir/icp.cu.i
 .PHONY : icp.cu.i
 
 icp.s: icp.cu.s
@@ -150,7 +150,7 @@ icp.s: icp.cu.s
 
 # target to generate assembly for a file
 icp.cu.s:
-	$(MAKE) $(MAKESILENT) -f -lineinfo CMakeFiles/icp_gpu_priority.dir/build.make CMakeFiles/icp_gpu_priority.dir/icp.cu.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/icp_gpu_priority.dir/build.make CMakeFiles/icp_gpu_priority.dir/icp.cu.s
 .PHONY : icp.cu.s
 
 # Help Target

@@ -18,9 +18,9 @@
 // #include "../pcl/gpu/octree/include/pcl/gpu/octree/octree.hpp"
 
 // #include "cuda_runtime.h"
-extern "C"{
-    #include "./cuPCL/cuOctree/lib/cudaOctree.h"
-}
+// extern "C"{
+//     #include "./cuPCL/cuOctree/lib/cudaOctree.h"
+// }
 
 //https://stackoverflow.com/questions/14038589/what-is-the-canonical-way-to-check-for-errors-using-the-cuda-runtime-api
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
@@ -85,7 +85,14 @@ void NearestNeighborSearch(
     //grid stride loop
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < search_indices_len; i += blockDim.x * gridDim.x) {
         int best_matched_index = 0;
-        int sp_index = search_indices[i];
+        // if(i == 0){
+        //     for(int j = 0; j < search_indices_len; j++){
+        //         // printf("search index: %i\n", search_indices[j]);
+        //         printf("search index: %i\n", *((unsigned int*)search_indices + j));
+        //     }
+        // }
+        int sp_index = *((unsigned int*)search_indices + i);
+        
         float s_x = source[sp_index*4];
         float s_y = source[sp_index*4 + 1];
         float s_z = source[sp_index*4 + 2];
@@ -179,8 +186,10 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, 
     int numBlocks = (nCount + blockSize - 1) / blockSize;
     // cout<<"block size: "<< blockSize<< endl;
     // cout<<"numBlocks: " << numBlocks << endl;
-    float rms_max = 10;
-    float rms_min = 0.1;
+    float rms_max = 0.01;
+    float rms_min = 0.0005;
+    double old_rms = 10000;
+    float rms_diff = 0.000001;
     float w = 1;
 
     for (int iter = 0; iter < max_iter; iter++) // iterations
@@ -192,8 +201,8 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, 
         int num_previous_matched_edges = edge_matched_indices.size();
         int num_previous_matched_nonedges = nonedge_matched_indices.size();
 
-        cout <<"edge vector size: " << num_previous_matched_edges << endl;
-        cout <<"nonedge vector size: " << num_previous_matched_nonedges << endl;
+        // cout <<"edge vector size: " << num_previous_matched_edges << endl;
+        // cout <<"nonedge vector size: " << num_previous_matched_nonedges << endl;
         float* previous_matched_edges = NULL;
         float* previous_edge_ptr = (float *)edge_matched_indices.data();
         int *edge_matched_indices_results;
@@ -227,13 +236,17 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, 
                                                                           
                                                                           );
         }
+
         float* previous_matched_nonedges = NULL;
         float* previous_non_edges_ptr = (float *)nonedge_matched_indices.data();
         int *matched_indices_results;
         float *matched_distances_results;
 
+        // for(int temp = 0; temp < num_previous_matched_nonedges; temp++){
+        //     cout << *((unsigned int*)previous_non_edges_ptr + temp)<<endl;
+        // }
         if(num_previous_matched_nonedges > 0){
-            
+            // cout<<"copying over nonedges"<<endl;
             gpuErrchk(cudaMallocManaged(&previous_matched_nonedges, sizeof(float) * num_previous_matched_nonedges, cudaMemAttachHost));
             gpuErrchk(cudaStreamAttachMemAsync (stream, previous_matched_nonedges));
             gpuErrchk(cudaMemcpyAsync(previous_matched_nonedges, previous_non_edges_ptr, sizeof(float) * num_previous_matched_nonedges, cudaMemcpyHostToDevice, stream));
@@ -270,45 +283,95 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, 
         vector<int> new_edge_matched;
         vector<int> new_nonedge_matched;
         double rms = 0.0;
-        cout<<"nDstCount * w: " << nDstCount * w << endl;
+        cout<< "nDstCount * w: " << nDstCount * w << endl;
+        // cout<< "num previous edges: " << num_previous_matched_edges<<endl;
+        // cout<< "num previous nonedges: " << num_previous_matched_nonedges << endl;
+        
+        bool stop_adding_to_matrix = false;
         for(int i = 0; i < num_previous_matched_edges + num_previous_matched_nonedges; i++){
             if(num_edge_matched > nDstCount * w){
-                break;
+                // cout<<"num edge matched > threshold: " << num_edge_matched << endl;
+                stop_adding_to_matrix = true;
             }
             int matched_index = 0;
+            int selected_index = 0;
             if(i <  num_previous_matched_edges){
                 matched_index = edge_matched_indices_results[i];
                 rms += edge_matched_distances_results[i];
+                selected_index = edge_matched_indices[i];
+
+                if(edge_points[matched_index]){
+                    num_edge_matched += 1;
+                    // cout<<"pushing back on edge indices"<<endl;
+                    // cout<<edge_matched_indices[i]<<endl;
+                    new_edge_matched.push_back(edge_matched_indices[i]);
+                }
+                else{
+                    new_nonedge_matched.push_back(edge_matched_indices[i]);
+                }
             }
             else{
                 matched_index = matched_indices_results[i - num_previous_matched_edges];
                 rms += matched_distances_results[i - num_previous_matched_edges];
-            }
-            
-            int selected_index = 0;
-            if(edge_points[matched_index]){
-                num_edge_matched += 1;
-                new_edge_matched.push_back(edge_matched_indices[i]);
-                selected_index = edge_matched_indices[i];
-            }
-            else{
-                // cout<<"pushing back on nonedge"<<endl;
-                new_nonedge_matched.push_back(nonedge_matched_indices[i - num_previous_matched_edges]);
                 selected_index = nonedge_matched_indices[i - num_previous_matched_edges];
+                if(edge_points[matched_index]){
+                    num_edge_matched += 1;
+                    // cout<<"pushing back on edge indices"<<endl;
+                    // cout<<edge_matched_indices[i]<<endl;
+                    new_edge_matched.push_back(nonedge_matched_indices[i-  num_previous_matched_edges]);
+                }
+                else{
+                    new_nonedge_matched.push_back(nonedge_matched_indices[i - num_previous_matched_edges]);
+                }
             }
             
-
-            Vector3f source_point (source->points[selected_index].x, source->points[selected_index].y, source->points[selected_index].z);
-            source_cloud_matrix.col(i) = total_rotation * source_point + total_translation;
-
             
-            Vector3f matched_point (reference->points[selected_index].x, reference->points[selected_index].y, reference->points[selected_index].z);
-            matched_cloud_matrix.col(i) = matched_point;
-            num_points++;
+            // // if(matched_index != 0)
+            // cout<<"selected index: " << selected_index<<endl;
+            // cout<<"matched index: " << matched_index <<endl;
+            // if(edge_points[matched_index]){
+            //     num_edge_matched += 1;
+            //     cout<<"pushing back on edge indices"<<endl;
+            //     cout<<edge_matched_indices[i]<<endl;
+            //     new_edge_matched.push_back(edge_matched_indices[i]);
+            //     selected_index = edge_matched_indices[i];
+            // }
+            // else{
+            //     // cout<<"pushing back on nonedge"<<endl;
+            //     new_nonedge_matched.push_back(nonedge_matched_indices[i - num_previous_matched_edges]);
+            //     selected_index = nonedge_matched_indices[i - num_previous_matched_edges];
+            // }
+            // cout<<"selected index: " << selected_index <<endl;
+            
+            // cout << "source pt: " << source->points[selected_index].x << " " << 
+            //                          source->points[selected_index].y << " " << 
+            //                          source->points[selected_index].z << " " << 
+                    
+            //         "reference pt: " << reference->points[selected_index].x << " " <<
+            //                             reference->points[selected_index].y << " " <<
+            //                             reference->points[selected_index].z << endl;
+
+            if(!stop_adding_to_matrix){
+                Vector3f source_point (source->points[selected_index].x, source->points[selected_index].y, source->points[selected_index].z);
+                source_cloud_matrix.col(i) = total_rotation * source_point + total_translation;
+
+                
+                Vector3f matched_point (reference->points[matched_index].x, reference->points[matched_index].y, reference->points[matched_index].z);
+                matched_cloud_matrix.col(i) = matched_point;
+                num_points++;
+            }
+            
         }
+        cout<<"edge matched points: " << num_points << endl;
         edge_matched_indices = new_edge_matched;
         nonedge_matched_indices = new_nonedge_matched;
 
+        // for(int element = 0; element < edge_matched_indices.size(); element++){
+        //     cout<<edge_matched_indices[element]<<endl;
+        // }
+        // for(int element = 0; element < nonedge_matched_indices.size(); element++){
+        //     cout<<nonedge_matched_indices[element]<<endl;
+        // }
         source_cloud_matrix = source_cloud_matrix(seqN(0,3), seqN(0,num_previous_matched_edges + num_previous_matched_nonedges));
         matched_cloud_matrix = matched_cloud_matrix(seqN(0,3), seqN(0,num_previous_matched_edges + num_previous_matched_nonedges));
         // for(int i = 0; i < nCount; i ++) {
@@ -317,22 +380,23 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, 
         // rms /= nCount;
         rms = sqrt(rms/num_points);
         cout<<"rms: " <<rms<<endl;
-        if(rms < convergence_criteria){
+        if(rms < convergence_criteria || abs(old_rms - rms) < rms_diff){
             cout<<"final rms: " <<rms<<endl;
             break;
         }
         
         //set w
         if(rms < rms_min){ //if less than min, set w to a small number of points
-            w = 0.01;
+            w = 0.001;
         }
         else if(rms < rms_max){
-            w = rms/rms_max*10;
+            w = rms/rms_max;
         }
         else{ //rms too large, no confidence
             w = 1;
         }
         
+        old_rms = rms;
         //cout<<"size of indices: " << sizeof(matched_indices)/sizeof(matched_indices[0])<<endl;
         // for(int i = 0; i < nCount; i++){
         //     cout <<  *(matched_indices + i) << " ";
@@ -366,8 +430,8 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, 
         // cout<<covariances.cols()<<endl;
 
         //compute singular value decomposition U and V
-        JacobiSVD<MatrixXf, ComputeThinU | ComputeThinV> svd(covariances); 
-        // svd.compute(covariances);
+        JacobiSVD<MatrixXf> svd; //this is different from the documentation, likely due to a bug: https://stackoverflow.com/questions/72749955/unable-to-compile-the-example-for-eigen-svd
+        svd.compute(covariances, ComputeThinU | ComputeThinV);
         // cout<<"found U and V"<<endl;
 
         //compute rotation and translation
@@ -450,7 +514,7 @@ int main(int argc, char** argv){
         {
             edge_points[a] = true;
         }
-        // cout<<edge_points[4]<<endl;
+        // cout<<edge_points[8968]<<endl;
         // cout<<edge_points[7]<<endl;
         // cout<<edge_points[1]<<endl;
         GetInfo();

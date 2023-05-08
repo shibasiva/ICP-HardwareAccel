@@ -71,7 +71,7 @@ int main(int argc, char** argv){
         name = name + postfix;
         // io::savePCDFileASCII (name, *edges);
 
-        edge_detection(reference, edges, 10, 0.2, name);
+        edge_detection(reference, edges, reference->points.size()/40, 0.5, name);
 
         
         cout<<"saved edges output to result.txt " << name <<endl;

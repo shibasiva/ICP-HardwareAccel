@@ -54,10 +54,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/justinguo01/ha_ws/src/ICP-HardwareAccel/edge_detection
+CMAKE_SOURCE_DIR = /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/edge_detection
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/justinguo01/ha_ws/src/ICP-HardwareAccel/edge_detection/build
+CMAKE_BINARY_DIR = /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/edge_detection/build
 
 #=============================================================================
 # Directory level rules for the build root directory
@@ -81,14 +81,14 @@ clean: CMakeFiles/find_edges.dir/clean
 CMakeFiles/find_edges.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/find_edges.dir/build.make CMakeFiles/find_edges.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/find_edges.dir/build.make CMakeFiles/find_edges.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/justinguo01/ha_ws/src/ICP-HardwareAccel/edge_detection/build/CMakeFiles --progress-num=1,2 "Built target find_edges"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/edge_detection/build/CMakeFiles --progress-num=1,2 "Built target find_edges"
 .PHONY : CMakeFiles/find_edges.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/find_edges.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/justinguo01/ha_ws/src/ICP-HardwareAccel/edge_detection/build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/edge_detection/build/CMakeFiles 2
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/find_edges.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/justinguo01/ha_ws/src/ICP-HardwareAccel/edge_detection/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/justin/Documents/HardwareAccelerators/ICP-HardwareAccel/edge_detection/build/CMakeFiles 0
 .PHONY : CMakeFiles/find_edges.dir/rule
 
 # Convenience name for target.
