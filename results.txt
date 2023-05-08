@@ -1,0 +1,49 @@
+ICP-CPU:
+bunny:
+    rms: 0.0264449
+    time: 15.4648 ms.
+car:
+    rms: 45.3644
+    time: 8141.46 ms.
+LIDAR:
+    rms: 0.0213893
+    time: 217629 ms.
+
+------------------------------------------------
+
+ICP-GPU:
+bunny:
+    rms: 0.0006229
+    time: 76.4358 ms.
+car:
+    rms: 0.000891365
+    time: 3162.26 ms.
+LIDAR:
+    rms: 0.000121851
+    time: 6240.09 ms.
+
+------------------------------------------------
+
+ICP-GPU-Priority:
+bunny:
+    rms: 0.0006229
+    time: 108.057 ms.
+car:
+    rms: 0.000222684
+    time: 3746.89 ms.
+LIDAR:
+    rms: 0.230525
+    time: 16646.4 ms.
+
+------------------------------------------------
+
+Fast-Robust-ICP (includes normal estimation):
+bunny:
+    rms: 0.00262664
+    time: 74.872 ms.
+car:
+    rms: 0.00414425
+    time: 346.781 milliseconds
+LIDAR:
+    rms: 0.0822118
+    time: 2208.211 milliseconds

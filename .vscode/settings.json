@@ -14,6 +14,7 @@
         "iterator": "cpp",
         "random": "cpp",
         "tuple": "cpp",
-        "map": "cpp"
+        "map": "cpp",
+        "chrono": "cpp"
     }
 }

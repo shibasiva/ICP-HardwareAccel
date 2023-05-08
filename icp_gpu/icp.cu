@@ -4,6 +4,7 @@
 #include <list>
 #include <Eigen/Dense>
 #include <stdio.h>
+#include <chrono>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -115,7 +116,12 @@ void NearestNeighborSearch(float* source, float* reference, int source_len, int 
 
 //map the source onto the reference
 void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
-{
+{   
+    chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
+    chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
+    chrono::duration<double, std::ratio<1, 1000>> time_span =
+    chrono::duration_cast<chrono::duration<double, ratio<1, 1000>>>(t2 - t1);
+
     int max_iter = 100; // max iterations
     double convergence_criteria = 0.001;
     // float resolution = 128.0; 
@@ -156,7 +162,8 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
     // cout<<sourceData[6]<<endl;
     // cout<<sourceData[7]<<endl;
 
-    // return;
+    t1 = chrono::steady_clock::now(); //time from loading in point clouds into GPU
+
     float *cuda_source = NULL;//points cloud source which be searched
     gpuErrchk(cudaMallocManaged(&cuda_source, sizeof(float) * 4 * nCount, cudaMemAttachHost));
     gpuErrchk(cudaStreamAttachMemAsync (stream, cuda_source));
@@ -176,6 +183,7 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
     int numBlocks = (nCount + blockSize - 1) / blockSize;
     // cout<<"block size: "<< blockSize<< endl;
     // cout<<"numBlocks: " << numBlocks << endl;
+
 
     for (int iter = 0; iter < max_iter; iter++) // iterations
     { 
@@ -294,6 +302,11 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
     cudaFree(cuda_reference);
     cudaStreamDestroy(stream);
     //write result as pcd
+    t2 = chrono::steady_clock::now();
+
+    time_span = chrono::duration_cast<chrono::duration<double, ratio<1, 1000>>>(t2 - t1);
+    cout << "ICP-GPU costs : " << time_span.count() << " ms."<< endl;
+
     Matrix4f transform = Matrix4f::Identity();
     transform.block<3,3>(0,0) = total_rotation;
     transform.block<3,1>(0,3) = total_translation;

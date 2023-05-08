@@ -17,12 +17,12 @@ using namespace std;
 using namespace pcl;
 int main(int argc, char** argv){
     
-    if(argc < 2){
-        cout<<"Usage: ./icp_cpp [pcd source] [pcd referece]"<<endl;
+    if(argc < 4){
+        cout<<"Usage: ./pcl_to_ply [time=t/f] [pcd_1 source] [pcd_1 reference] [pcd_2 source] [pcd_2 reference] ..."<<endl;
         return 0;
     }
     else{
-        for(int i = 1; i < argc; i++){
+        for(int i = 2; i < argc; i++){
             cout<<"working on: " << argv[i] << endl;
             PointCloud<PointXYZ>::Ptr source (new PointCloud<PointXYZ>);
             PointCloud<PointNormal>::Ptr dest (new PointCloud<PointNormal>);
@@ -40,7 +40,7 @@ int main(int argc, char** argv){
             ne.setSearchMethod (tree);
 
             PointCloud<Normal>::Ptr cloud_normals (new PointCloud<Normal>);
-            ne.setRadiusSearch (5);
+            ne.setKSearch (30);
             ne.compute (*cloud_normals);
 
             dest->height = source->height;
@@ -61,10 +61,19 @@ int main(int argc, char** argv){
                 dest->points[i].normal_z = cloud_normals->points[i].normal_z;
             }
 
+            string timing = argv[1];
             string filename = file.substr(0, file.find(".pcd"));
-
-            string result = filename + "." + "ply";
-            io::savePLYFile(result, *dest);
+            if(timing == "t"){
+                // cout<<"testing"<<endl;
+                string result = filename + "_timing." + "ply";
+                io::savePLYFile(result, *dest);
+            }
+            else{
+                string result = filename + "." + "ply";
+                io::savePLYFile(result, *dest);
+            }
+            
+            
         }
         
         return 0;

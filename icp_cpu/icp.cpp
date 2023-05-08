@@ -25,7 +25,7 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
     chrono::duration_cast<chrono::duration<double, ratio<1, 1000>>>(t2 - t1);
 
     int max_iter = 100; // max iterations
-    double convergence_criteria = 0.003;
+    double convergence_criteria = 0.03; //relaxed criterion for convergence since using ANN search
     float resolution = 128.0; 
     Matrix3d total_rotation = Matrix3d::Identity();
     Vector3d total_translation = Vector3d::Zero();
@@ -62,7 +62,7 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
             octree.approxNearestSearch(transformed_pointXYZ, closest_point_index, closest_point_distance); //faster than actual nearest search
             Vector3d source_point(transformed_pointXYZ.x, transformed_pointXYZ.y, transformed_pointXYZ.z);
             source_cloud_matrix.col(index) = source_point;
-            cout<< closest_point_index << " ";
+            // cout<< closest_point_index << " ";
             Vector3d matched_point(reference->points[closest_point_index].x, reference->points[closest_point_index].y, reference->points[closest_point_index].z);
             // cout<<"matched point: " << matched_point << endl;
             matched_cloud_matrix.col(index) = matched_point;
@@ -138,7 +138,7 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
 int main(int argc, char** argv)
 {
     if(argc != 3){
-        cout<<"Usage: ./icp_cpp [pcd source] [pcd referece]"<<endl;
+        cout<<"Usage: ./icp_cpp [pcd source] [pcd reference]"<<endl;
         return 0;
     }
     else{

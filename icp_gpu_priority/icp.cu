@@ -5,6 +5,7 @@
 #include <fstream>
 #include <Eigen/Dense>
 #include <stdio.h>
+#include <chrono>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -135,7 +136,12 @@ void NearestNeighborSearch(
 
 //map the source onto the reference
 void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, map<int, bool>& edge_points)
-{
+{   
+    chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
+    chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
+    chrono::duration<double, std::ratio<1, 1000>> time_span =
+    chrono::duration_cast<chrono::duration<double, ratio<1, 1000>>>(t2 - t1);
+
     int max_iter = 100; // max iterations
     double convergence_criteria = 0.001;
     // float resolution = 128.0; 
@@ -143,10 +149,12 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, 
     Matrix3f total_rotation = Matrix3f::Identity();
     Vector3f total_translation = Vector3f::Zero();
 
+    t1 = chrono::steady_clock::now();
 
     // //following from this code: https://github.com/NVIDIA-AI-IOT/cuPCL/blob/main/cuOctree/main.cpp
     int regular_priority = 2;
     int higher_priority = 1;
+
     cudaStream_t stream = NULL;
     // cudaStreamCreate(&stream);
     cudaStreamCreateWithPriority(&stream, cudaStreamNonBlocking, regular_priority);
@@ -186,7 +194,7 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, 
     int numBlocks = (nCount + blockSize - 1) / blockSize;
     // cout<<"block size: "<< blockSize<< endl;
     // cout<<"numBlocks: " << numBlocks << endl;
-    float rms_max = 0.01;
+    float rms_max = 5;
     float rms_min = 0.0005;
     double old_rms = 10000;
     float rms_diff = 0.000001;
@@ -283,7 +291,7 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, 
         vector<int> new_edge_matched;
         vector<int> new_nonedge_matched;
         double rms = 0.0;
-        cout<< "nDstCount * w: " << nDstCount * w << endl;
+        // cout<< "nDstCount * w: " << nDstCount * w << endl;
         // cout<< "num previous edges: " << num_previous_matched_edges<<endl;
         // cout<< "num previous nonedges: " << num_previous_matched_nonedges << endl;
         
@@ -324,32 +332,6 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, 
                     new_nonedge_matched.push_back(nonedge_matched_indices[i - num_previous_matched_edges]);
                 }
             }
-            
-            
-            // // if(matched_index != 0)
-            // cout<<"selected index: " << selected_index<<endl;
-            // cout<<"matched index: " << matched_index <<endl;
-            // if(edge_points[matched_index]){
-            //     num_edge_matched += 1;
-            //     cout<<"pushing back on edge indices"<<endl;
-            //     cout<<edge_matched_indices[i]<<endl;
-            //     new_edge_matched.push_back(edge_matched_indices[i]);
-            //     selected_index = edge_matched_indices[i];
-            // }
-            // else{
-            //     // cout<<"pushing back on nonedge"<<endl;
-            //     new_nonedge_matched.push_back(nonedge_matched_indices[i - num_previous_matched_edges]);
-            //     selected_index = nonedge_matched_indices[i - num_previous_matched_edges];
-            // }
-            // cout<<"selected index: " << selected_index <<endl;
-            
-            // cout << "source pt: " << source->points[selected_index].x << " " << 
-            //                          source->points[selected_index].y << " " << 
-            //                          source->points[selected_index].z << " " << 
-                    
-            //         "reference pt: " << reference->points[selected_index].x << " " <<
-            //                             reference->points[selected_index].y << " " <<
-            //                             reference->points[selected_index].z << endl;
 
             if(!stop_adding_to_matrix){
                 Vector3f source_point (source->points[selected_index].x, source->points[selected_index].y, source->points[selected_index].z);
@@ -362,16 +344,11 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, 
             }
             
         }
-        cout<<"edge matched points: " << num_points << endl;
+        // cout<<"edge matched points using: " << num_edge_matched << endl;
+        // cout<<"matrix using: " << num_points << endl;
         edge_matched_indices = new_edge_matched;
         nonedge_matched_indices = new_nonedge_matched;
 
-        // for(int element = 0; element < edge_matched_indices.size(); element++){
-        //     cout<<edge_matched_indices[element]<<endl;
-        // }
-        // for(int element = 0; element < nonedge_matched_indices.size(); element++){
-        //     cout<<nonedge_matched_indices[element]<<endl;
-        // }
         source_cloud_matrix = source_cloud_matrix(seqN(0,3), seqN(0,num_previous_matched_edges + num_previous_matched_nonedges));
         matched_cloud_matrix = matched_cloud_matrix(seqN(0,3), seqN(0,num_previous_matched_edges + num_previous_matched_nonedges));
         // for(int i = 0; i < nCount; i ++) {
@@ -474,6 +451,11 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, 
     cudaFree(cuda_source);
     cudaFree(cuda_reference);
     cudaStreamDestroy(stream);
+    t2 = chrono::steady_clock::now();
+
+    time_span = chrono::duration_cast<chrono::duration<double, ratio<1, 1000>>>(t2 - t1);
+    cout << "ICP-GPU Priority Scheduler costs : " << time_span.count() << " ms."<< endl;
+
     //write result as pcd
     Matrix4f transform = Matrix4f::Identity();
     transform.block<3,3>(0,0) = total_rotation;
@@ -483,13 +465,13 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, 
     *source += *reference;
     pcl::io::savePCDFileASCII ("result.pcd", *source);
 
-    cout<<"saved ICP-GPU output to result.pcd"<<endl;
+    cout<<"saved ICP-GPU Priority Scheduler output to result.pcd"<<endl;
 }
 
 int main(int argc, char** argv){
     
     if(argc != 4){
-        cout<<"Usage: ./icp_cpp [pcd source] [pcd reference] [pcd reference edges.txt]"<<endl;
+        cout<<"Usage: ./icp_gpu_priority [pcd source] [pcd reference] [pcd reference edges.txt]"<<endl;
         return 0;
     }
     else{
