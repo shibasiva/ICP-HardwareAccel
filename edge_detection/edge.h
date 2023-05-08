@@ -1,4 +1,8 @@
 #include <iostream>
+#include <fstream>
+#include <iterator>
+#include <string>
+#include <vector>
 
 #ifndef EDGE_H
 #define EDGE_H
@@ -9,8 +13,9 @@
 #include <pcl/io/pcd_io.h>
 #include <Eigen/Core>
 
+
 using namespace std;
 using namespace pcl;
 
-void edge_detection(pcl::PointCloud<pcl::PointXYZ>::Ptr reference, pcl::PointCloud<pcl::PointXYZ>::Ptr edgePoints, int k, double lambda);
+void edge_detection(pcl::PointCloud<pcl::PointXYZ>::Ptr reference, pcl::PointCloud<pcl::PointXYZ>::Ptr edgePoints, int k, double lambda, string name);
 #endif

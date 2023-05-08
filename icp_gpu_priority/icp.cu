@@ -2,6 +2,7 @@
 #include <vector>
 #include <cmath>
 #include <list>
+#include <fstream>
 #include <Eigen/Dense>
 #include <stdio.h>
 #include <pcl/io/pcd_io.h>
@@ -40,7 +41,7 @@ using namespace std;
 using namespace Eigen;
 using namespace pcl;
 
-void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference);
+void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, map<int, bool>& edge_points);
 
 void GetInfo(void)
 {
@@ -66,149 +67,297 @@ void GetInfo(void)
     printf("\n");
 }
 
-// __global__ 
-// void NearestNeighborSearch(vector<PointXYZ>* search_cloud, octree::OctreePointCloudSearch<PointXYZ>* octree, MatrixXd* result)
-// {
-//     int idx = blockIdx.x * blockDim.x + threadIdx.x;
+__global__ 
+void NearestNeighborSearch(
+                           float* source, 
+                           float* reference, 
+                           float* search_indices,
+                           int search_indices_len, 
+                           int reference_len, 
+                           Matrix3f rotation, 
+                           Vector3f translation, 
+                           int* matched_indices, 
+                           float* matched_distances
+                           )
+{
+    if(search_indices_len <= 0) return;
     
-//     int closest_point_index;
-//     float closest_point_distance;
-//     octree->approxNearestSearch((*search_cloud)[idx], closest_point_index, closest_point_distance);  
-//     result->col(idx) = Vector2d(closest_point_index, closest_point_distance);
-//     return;
-// }
+    //grid stride loop
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < search_indices_len; i += blockDim.x * gridDim.x) {
+        int best_matched_index = 0;
+        int sp_index = search_indices[i];
+        float s_x = source[sp_index*4];
+        float s_y = source[sp_index*4 + 1];
+        float s_z = source[sp_index*4 + 2];
+
+        // if(i == 0){
+        //     printf("first source pt\n");
+        //     printf("%f\n", s_x);
+        //     printf("%f\n", s_y);
+        //     printf("%f\n", s_z);
+        // }
+        Vector3f sp (s_x, s_y, s_z);
+        Vector3f tsp = rotation * sp + translation;
+
+        float best_matched_distance = ((reference[0] - tsp(0))*(reference[0] - tsp(0)) + 
+                                       (reference[1] - tsp(1))*(reference[1] - tsp(1)) + 
+                                       (reference[2] - tsp(2))*(reference[2] - tsp(2)));
+        
+        for(int reference_point_index = 1; reference_point_index < reference_len; reference_point_index++){
+            float r_x = reference[reference_point_index*4];
+            float r_y = reference[reference_point_index*4 + 1];
+            float r_z = reference[reference_point_index*4 + 2];
+            // printf("examining point: %f %f %f\n", r_x, r_y, r_z);
+            float new_matched_distance = ((r_x - tsp(0))*(r_x - tsp(0))+
+                                          (r_y - tsp(1))*(r_y - tsp(1))+
+                                          (r_z - tsp(2))*(r_z - tsp(2)));
+
+            if(new_matched_distance < best_matched_distance){
+                // printf("i: %i | old distance: %f | new matching distance: %f\n", reference_point_index, best_matched_distance, new_matched_distance);
+
+                best_matched_distance = new_matched_distance;
+                best_matched_index = reference_point_index;
+                // printf("new matching index: %i\n", reference_point);
+            }
+        }
+        // printf("i: %i | matched index: %i | matched distance: %f\n", i, best_matched_index, best_matched_distance);
+        matched_indices[i] = best_matched_index;
+        matched_distances[i] = best_matched_distance;   
+    }
+}
 
 //map the source onto the reference
-void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
+void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, map<int, bool>& edge_points)
 {
     int max_iter = 100; // max iterations
-    double convergence_criteria = 0.003;
+    double convergence_criteria = 0.001;
     // float resolution = 128.0; 
 
-    Matrix3d total_rotation = Matrix3d::Identity();
-    Vector3d total_translation = Vector3d::Zero();
-    //following from this code: https://github.com/NVIDIA-AI-IOT/cuPCL/blob/main/cuOctree/main.cpp
+    Matrix3f total_rotation = Matrix3f::Identity();
+    Vector3f total_translation = Vector3f::Zero();
+
+
+    // //following from this code: https://github.com/NVIDIA-AI-IOT/cuPCL/blob/main/cuOctree/main.cpp
+    int regular_priority = 2;
+    int higher_priority = 1;
     cudaStream_t stream = NULL;
-    cudaStreamCreate ( &stream );
-
-            
-    unsigned int nCount = reference->width * reference->height;
-    float *inputData = (float *)reference->points.data();
+    // cudaStreamCreate(&stream);
+    cudaStreamCreateWithPriority(&stream, cudaStreamNonBlocking, regular_priority);
+    cudaStream_t priority_stream = NULL;
+    cudaStreamCreateWithPriority(&priority_stream, cudaStreamNonBlocking, higher_priority);
     
-    float *input = NULL;//points cloud source which be searched
-    cudaMallocManaged(&input, sizeof(float) * 4 * nCount, cudaMemAttachHost);
-    cudaStreamAttachMemAsync (stream, input);
-    cudaMemcpyAsync(input, inputData, sizeof(float) * 4 * nCount, cudaMemcpyHostToDevice, stream);
-    cudaStreamSynchronize(stream);
+    //load data onto GPU
+    unsigned int nCount = reference->width * reference->height;
+    float *referenceData = (float *)reference->points.data();
 
-    float resolution = 0.03f;
-    cudaTree treeTest(input, nCount, resolution, stream);
+    unsigned int nDstCount = source->width * source->height;
+    float *sourceData = (float *)source->points.data();
+
+    float *cuda_source = NULL;
+    gpuErrchk(cudaMallocManaged(&cuda_source, sizeof(float) * 4 * nCount, cudaMemAttachHost));
+    gpuErrchk(cudaStreamAttachMemAsync (stream, cuda_source));
+    // gpuErrchk(cudaMemcpyAsync(cuda_source, sourceData, sizeof(float) * 4 * nCount, cudaMemcpyHostToDevice, stream));
+    gpuErrchk(cudaMemcpyAsync(cuda_source, sourceData, sizeof(float) * 4 * nCount, cudaMemcpyHostToDevice, stream));
+    gpuErrchk(cudaStreamSynchronize(stream));
+    
+    float *cuda_reference = NULL;
+    gpuErrchk(cudaMallocManaged(&cuda_reference, sizeof(float) * 4 *nDstCount, cudaMemAttachHost));
+    gpuErrchk(cudaStreamAttachMemAsync (stream, cuda_reference));
+    // gpuErrchk(cudaMemcpyAsync(cuda_reference, referenceData, sizeof(float) * 4 * nDstCount, cudaMemcpyHostToDevice, stream));
+    gpuErrchk(cudaMemcpyAsync(cuda_reference, referenceData, sizeof(float) * 4 * nDstCount, cudaMemcpyHostToDevice, stream));
+    gpuErrchk(cudaStreamSynchronize(stream));
+
+    // float resolution = 0.03f;
+    vector<int> edge_matched_indices;
+    vector<int> nonedge_matched_indices;
+
+    for(int i = 0; i < nDstCount; i++){
+        nonedge_matched_indices.push_back(i);
+    }
+
+    int blockSize = 1024;
+    int numBlocks = (nCount + blockSize - 1) / blockSize;
+    // cout<<"block size: "<< blockSize<< endl;
+    // cout<<"numBlocks: " << numBlocks << endl;
+    float rms_max = 10;
+    float rms_min = 0.1;
+    float w = 1;
 
     for (int iter = 0; iter < max_iter; iter++) // iterations
     { 
         cout<<"iter: "<<iter<<endl;
-        // cout<<"source cloud size: "<< source->points.size()<<endl;
-        MatrixXd source_cloud_matrix(3, source->points.size()); //X
-        MatrixXd matched_cloud_matrix(3, source->points.size()); //P
+        MatrixXf source_cloud_matrix(3, source->points.size()); //X
+        MatrixXf matched_cloud_matrix(3, source->points.size()); //P
 
-        //for every point in the source, find the closest point in the reference
-        //calculate the center of mass
-        //break if rms is low enough
-        
+        int num_previous_matched_edges = edge_matched_indices.size();
+        int num_previous_matched_nonedges = nonedge_matched_indices.size();
 
-        unsigned int nDstCount = source->width * source->height;
-        float *outputData = (float *)source->points.data();
+        cout <<"edge vector size: " << num_previous_matched_edges << endl;
+        cout <<"nonedge vector size: " << num_previous_matched_nonedges << endl;
+        float* previous_matched_edges = NULL;
+        float* previous_edge_ptr = (float *)edge_matched_indices.data();
+        int *edge_matched_indices_results;
+        float *edge_matched_distances_results;
 
-        float *output = NULL;// Dst is the targets points
-        checkCudaErrors(cudaMallocManaged(&output, sizeof(float) * 4 *nDstCount, cudaMemAttachHost));
-        checkCudaErrors(cudaStreamAttachMemAsync (stream, output));
-        checkCudaErrors(cudaMemsetAsync(output, 0, sizeof(unsigned int), stream));
-        checkCudaErrors(cudaMemcpyAsync(output, outputData, sizeof(float) * 4 * nDstCount, cudaMemcpyHostToDevice, stream));
-        cudaStreamSynchronize(stream);
-
-        float *search = NULL;//search point (one point)
-        cudaMallocManaged(&search, sizeof(float) * 4, cudaMemAttachHost);
-        cudaStreamAttachMemAsync (stream, search);
-        cudaStreamSynchronize(stream);
-
-        unsigned int *selectedCount = NULL;//count of points selected
-        checkCudaErrors(cudaMallocManaged(&selectedCount, sizeof(unsigned int)*nDstCount, cudaMemAttachHost));
-        checkCudaErrors(cudaStreamAttachMemAsync(stream, selectedCount) );
-        checkCudaErrors(cudaMemsetAsync(selectedCount, 0, sizeof(unsigned int)*nDstCount, stream));
-
-        int *index = NULL;//index selected by search
-        cudaMallocManaged(&index, sizeof(int) * nCount, cudaMemAttachHost);
-        cudaStreamAttachMemAsync (stream, index);
-        cudaMemsetAsync(index, 0, sizeof(unsigned int), stream);
-        cudaStreamSynchronize(stream);
-
-        float *distance = NULL;//suqure distance between points selected by search
-        cudaMallocManaged(&distance, sizeof(float) * nCount, cudaMemAttachHost);
-        cudaStreamAttachMemAsync (stream, distance);
-        cudaMemsetAsync(distance, 0, sizeof(unsigned int), stream);
-        cudaStreamSynchronize(stream);
-
-
-        cudaMemsetAsync(index, 0, sizeof(unsigned int), stream);
-        cudaMemsetAsync(distance, 0xFF, sizeof(unsigned int), stream);
-        cudaMemsetAsync(selectedCount, 0, sizeof(unsigned int), stream);
-        cudaStreamSynchronize(stream);
-
-        int *pointIdxANSearch = index;
-        float *pointANSquaredDistance = distance;
-        int status = 0;
-        *selectedCount = nDstCount;
-
-        cudaDeviceSynchronize();
-
-        cout<<"searching tree"<<endl;
-        status = treeTest.approxNearestSearch(output, pointIdxANSearch, pointANSquaredDistance, selectedCount);
-        cout<<"done searching tree" << endl;
-        cudaDeviceSynchronize();
-
-        // cout<<"did all the cuda stuff"<<endl;
-        if (status != 0){
-            cerr<<"Failed to find approx nearest search"<<endl;
-            return;
-        } 
-        double rms = 0.0;
-        for(int i = 0; i < *selectedCount; i ++) {
-            rms += ( *(((unsigned int*)pointANSquaredDistance) + i) )/1e9;
+        if(num_previous_matched_edges > 0){
+            gpuErrchk(cudaMallocManaged(&previous_matched_edges, sizeof(float) * num_previous_matched_edges, cudaMemAttachHost));
+            gpuErrchk(cudaStreamAttachMemAsync (priority_stream, previous_matched_edges));
+            gpuErrchk(cudaMemcpyAsync(previous_matched_edges, previous_edge_ptr, sizeof(float) *num_previous_matched_edges, cudaMemcpyHostToDevice, priority_stream));
+            gpuErrchk(cudaStreamSynchronize(priority_stream));
+           
+            gpuErrchk(cudaMallocManaged(&edge_matched_indices_results, sizeof(int) * nCount, cudaMemAttachHost));
+            gpuErrchk(cudaStreamAttachMemAsync (priority_stream, edge_matched_indices_results));
+            gpuErrchk(cudaMemsetAsync(edge_matched_indices_results, 0, sizeof(unsigned int), priority_stream));
+            gpuErrchk(cudaStreamSynchronize(priority_stream));
+            
+            gpuErrchk(cudaMallocManaged(&edge_matched_distances_results, sizeof(float) * nCount, cudaMemAttachHost));
+            gpuErrchk(cudaStreamAttachMemAsync (priority_stream, edge_matched_distances_results));
+            gpuErrchk(cudaMemsetAsync(edge_matched_distances_results, 0, sizeof(unsigned int), priority_stream));
+            gpuErrchk(cudaStreamSynchronize(priority_stream));
+            NearestNeighborSearch<<<numBlocks, blockSize, 0, priority_stream>>>(
+                                                                          cuda_source, 
+                                                                          cuda_reference, 
+                                                                          previous_matched_edges, 
+                                                                          num_previous_matched_edges,
+                                                                          nDstCount, 
+                                                                          total_rotation, 
+                                                                          total_translation, 
+                                                                          edge_matched_indices_results,
+                                                                          edge_matched_distances_results
+                                                                          
+                                                                          );
         }
+        float* previous_matched_nonedges = NULL;
+        float* previous_non_edges_ptr = (float *)nonedge_matched_indices.data();
+        int *matched_indices_results;
+        float *matched_distances_results;
 
-        rms = sqrt(rms/(*selectedCount));
+        if(num_previous_matched_nonedges > 0){
+            
+            gpuErrchk(cudaMallocManaged(&previous_matched_nonedges, sizeof(float) * num_previous_matched_nonedges, cudaMemAttachHost));
+            gpuErrchk(cudaStreamAttachMemAsync (stream, previous_matched_nonedges));
+            gpuErrchk(cudaMemcpyAsync(previous_matched_nonedges, previous_non_edges_ptr, sizeof(float) * num_previous_matched_nonedges, cudaMemcpyHostToDevice, stream));
+            gpuErrchk(cudaStreamSynchronize(stream));
+
+            gpuErrchk(cudaMallocManaged(&matched_indices_results, sizeof(int) * nCount, cudaMemAttachHost));
+            gpuErrchk(cudaStreamAttachMemAsync (stream, matched_indices_results));
+            gpuErrchk(cudaMemsetAsync(matched_indices_results, 0, sizeof(unsigned int), stream));
+            gpuErrchk(cudaStreamSynchronize(stream));
+           
+            gpuErrchk(cudaMallocManaged(&matched_distances_results, sizeof(float) * nCount, cudaMemAttachHost));
+            gpuErrchk(cudaStreamAttachMemAsync (stream, matched_distances_results));
+            gpuErrchk(cudaMemsetAsync(matched_distances_results, 0, sizeof(unsigned int), stream));
+            gpuErrchk(cudaStreamSynchronize(stream));
+
+            
+            NearestNeighborSearch<<<numBlocks, blockSize, 0, stream>>>(
+                                                                    cuda_source, 
+                                                                    cuda_reference, 
+                                                                    previous_matched_nonedges, 
+                                                                    num_previous_matched_nonedges,
+                                                                    nDstCount, 
+                                                                    total_rotation, 
+                                                                    total_translation, 
+                                                                    matched_indices_results, 
+                                                                    matched_distances_results
+                                                                    );
+        }
+        
+        gpuErrchk(cudaStreamSynchronize(stream));
+        gpuErrchk(cudaStreamSynchronize(priority_stream));
+        int num_edge_matched = 0;
+        int num_points = 0;
+        vector<int> new_edge_matched;
+        vector<int> new_nonedge_matched;
+        double rms = 0.0;
+        cout<<"nDstCount * w: " << nDstCount * w << endl;
+        for(int i = 0; i < num_previous_matched_edges + num_previous_matched_nonedges; i++){
+            if(num_edge_matched > nDstCount * w){
+                break;
+            }
+            int matched_index = 0;
+            if(i <  num_previous_matched_edges){
+                matched_index = edge_matched_indices_results[i];
+                rms += edge_matched_distances_results[i];
+            }
+            else{
+                matched_index = matched_indices_results[i - num_previous_matched_edges];
+                rms += matched_distances_results[i - num_previous_matched_edges];
+            }
+            
+            int selected_index = 0;
+            if(edge_points[matched_index]){
+                num_edge_matched += 1;
+                new_edge_matched.push_back(edge_matched_indices[i]);
+                selected_index = edge_matched_indices[i];
+            }
+            else{
+                // cout<<"pushing back on nonedge"<<endl;
+                new_nonedge_matched.push_back(nonedge_matched_indices[i - num_previous_matched_edges]);
+                selected_index = nonedge_matched_indices[i - num_previous_matched_edges];
+            }
+            
+
+            Vector3f source_point (source->points[selected_index].x, source->points[selected_index].y, source->points[selected_index].z);
+            source_cloud_matrix.col(i) = total_rotation * source_point + total_translation;
+
+            
+            Vector3f matched_point (reference->points[selected_index].x, reference->points[selected_index].y, reference->points[selected_index].z);
+            matched_cloud_matrix.col(i) = matched_point;
+            num_points++;
+        }
+        edge_matched_indices = new_edge_matched;
+        nonedge_matched_indices = new_nonedge_matched;
+
+        source_cloud_matrix = source_cloud_matrix(seqN(0,3), seqN(0,num_previous_matched_edges + num_previous_matched_nonedges));
+        matched_cloud_matrix = matched_cloud_matrix(seqN(0,3), seqN(0,num_previous_matched_edges + num_previous_matched_nonedges));
+        // for(int i = 0; i < nCount; i ++) {
+        //     rms += matched_distances[i]; 
+        // }
+        // rms /= nCount;
+        rms = sqrt(rms/num_points);
         cout<<"rms: " <<rms<<endl;
         if(rms < convergence_criteria){
             cout<<"final rms: " <<rms<<endl;
             break;
         }
-        // cout<<"source cloud matrix" << endl;
-        // cout<<source_cloud_matrix<<endl;
-        // cout<<"matched cloud matrix" <<endl;
-        // cout<<matched_cloud_matrix<<endl;
-
-        for(int i = 0; i < *selectedCount; i++){
-            Vector3d source_point (source->points[i].x, source->points[i].y, source->points[i].z);
-            source_cloud_matrix.col(i) = source_point;
-
-            int matched_index = *(((unsigned int*)pointIdxANSearch) + i);
-            Vector3d matched_point (reference->points[matched_index].x, reference->points[matched_index].y, reference->points[matched_index].z);
-            matched_cloud_matrix.col(i) = matched_point;
+        
+        //set w
+        if(rms < rms_min){ //if less than min, set w to a small number of points
+            w = 0.01;
         }
+        else if(rms < rms_max){
+            w = rms/rms_max*10;
+        }
+        else{ //rms too large, no confidence
+            w = 1;
+        }
+        
+        //cout<<"size of indices: " << sizeof(matched_indices)/sizeof(matched_indices[0])<<endl;
+        // for(int i = 0; i < nCount; i++){
+        //     cout <<  *(matched_indices + i) << " ";
+        // }
+        // cout << endl;
 
+        // for(int i = 0; i < nCount; i++){
+        //     cout <<  *(matched_distances + i) << " ";
+        // }
+        // cout << endl;
 
-        Vector3d source_center_of_mass = source_cloud_matrix.rowwise().mean();
+        // cin.get();   
+
+        Vector3f source_center_of_mass = source_cloud_matrix.rowwise().mean();
         // cout<<source_center_of_mass<<endl;
         source_cloud_matrix = source_cloud_matrix.colwise() - source_center_of_mass; //TODO: check this math: https://stackoverflow.com/questions/42811084/eigen-subtracting-vector-from-matrix-columns
         
-        Vector3d matched_center_of_mass = matched_cloud_matrix.rowwise().mean();
+        Vector3f matched_center_of_mass = matched_cloud_matrix.rowwise().mean();
         // cout<<matched_center_of_mass<<endl;
         matched_cloud_matrix = matched_cloud_matrix.colwise() - matched_center_of_mass; //TODO: check this math
         // cout<<"found center of masses"<<endl;
 
         //compute dxd matrix of covariances W
-        Matrix3d covariances = Matrix3d::Zero();
-        for(int col = 0; col < source->points.size(); col++){
+        Matrix3f covariances = Matrix3f::Zero();
+        for(int col = 0; col < source_cloud_matrix.cols(); col++){
             covariances = covariances + (source_cloud_matrix.col(col) * matched_cloud_matrix.col(col).transpose());
         }
 
@@ -217,44 +366,66 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
         // cout<<covariances.cols()<<endl;
 
         //compute singular value decomposition U and V
-        JacobiSVD<MatrixXd, ComputeThinU | ComputeThinV> svd(covariances); //this is different from the documentation, likely due to a bug: https://stackoverflow.com/questions/72749955/unable-to-compile-the-example-for-eigen-svd
+        JacobiSVD<MatrixXf, ComputeThinU | ComputeThinV> svd(covariances); 
         // svd.compute(covariances);
         // cout<<"found U and V"<<endl;
 
         //compute rotation and translation
-        Matrix3d rotation = svd.matrixU() * (svd.matrixV().transpose());
-        Vector3d translation = source_center_of_mass - rotation * matched_center_of_mass;
+        Matrix3f rotation = svd.matrixU() * (svd.matrixV().transpose());
+        Vector3f translation = source_center_of_mass - rotation * matched_center_of_mass;
+
+        // cout<< "rotation: " << rotation << endl;
+        // cout<< "translation: " << translation << endl;
+        // cout<< "source centroid: " << total_rotation *  source_center_of_mass + total_translation << endl;
+        // cout<< "matched centroid: " << matched_center_of_mass << endl;
+        total_rotation *= rotation.transpose();
+        total_translation -= translation;
+
+        // //create transform
+        // Matrix4f transform = Matrix4f::Identity();
+        // transform.block<3,3>(0,0) = rotation.transpose();
+        // transform.block<3,1>(0,3) = -translation;
+        // transformPointCloud (*source, *source, transform);
+
+        // cudaDeviceSynchronize();
+        // cudaFree(search);
+        // cudaFree(index);
+        // cudaFree(output);
+        // cudaFree(distance);
+        // cudaFree(selectedCount);
+        if(num_previous_matched_nonedges > 0){
+            cudaFree(matched_indices_results);
+            cudaFree(matched_distances_results);
+            cudaFree(previous_matched_nonedges);
+        }
+        
+        if(num_previous_matched_edges > 0){
+            cudaFree(edge_matched_indices_results);
+            cudaFree(edge_matched_distances_results);
+            cudaFree(previous_matched_edges);
+        }
 
         
-        // total_rotation *= rotation.transpose();
-        // total_translation -= translation;
-
-        //create transform
-        Matrix4d transform = Matrix4d::Identity();
-        transform.block<3,3>(0,0) = rotation.transpose();
-        transform.block<3,1>(0,3) = -translation;
-        transformPointCloud (*source, *source, transform);
-
-        cudaDeviceSynchronize();
-        cudaFree(search);
-        cudaFree(index);
-        cudaFree(output);
-        cudaFree(distance);
-        cudaFree(selectedCount);
     }
-    cudaFree(input);
+    cudaFree(cuda_source);
+    cudaFree(cuda_reference);
     cudaStreamDestroy(stream);
     //write result as pcd
+    Matrix4f transform = Matrix4f::Identity();
+    transform.block<3,3>(0,0) = total_rotation;
+    transform.block<3,1>(0,3) = total_translation;
+    transformPointCloud (*source, *source, transform);
+
     *source += *reference;
     pcl::io::savePCDFileASCII ("result.pcd", *source);
 
-    cout<<"saved ICP-CPU output to result.pcd"<<endl;
+    cout<<"saved ICP-GPU output to result.pcd"<<endl;
 }
 
 int main(int argc, char** argv){
     
-    if(argc != 3){
-        cout<<"Usage: ./icp_cpp [pcd source] [pcd referece]"<<endl;
+    if(argc != 4){
+        cout<<"Usage: ./icp_cpp [pcd source] [pcd reference] [pcd reference edges.txt]"<<endl;
         return 0;
     }
     else{
@@ -272,8 +443,18 @@ int main(int argc, char** argv){
             cout<< "Couldn't read file " + s + "\n" << endl;
             return (-1);
         }
+        map<int, bool> edge_points;
+        std::ifstream infile(argv[3]);
+        int a;
+        while (infile >> a)
+        {
+            edge_points[a] = true;
+        }
+        // cout<<edge_points[4]<<endl;
+        // cout<<edge_points[7]<<endl;
+        // cout<<edge_points[1]<<endl;
         GetInfo();
-        ICP(source, reference);
+        ICP(source, reference, edge_points); 
         return 0;
     }
 }

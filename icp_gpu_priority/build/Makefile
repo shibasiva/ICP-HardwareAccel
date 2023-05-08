@@ -121,12 +121,12 @@ depend:
 
 # Build rule for target.
 icp_gpu_priority: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 icp_gpu_priority
+	$(MAKE) $(MAKESILENT) -f -lineinfo CMakeFiles/Makefile2 icp_gpu_priority
 .PHONY : icp_gpu_priority
 
 # fast build rule for target.
 icp_gpu_priority/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/icp_gpu_priority.dir/build.make CMakeFiles/icp_gpu_priority.dir/build
+	$(MAKE) $(MAKESILENT) -f -lineinfo CMakeFiles/icp_gpu_priority.dir/build.make CMakeFiles/icp_gpu_priority.dir/build
 .PHONY : icp_gpu_priority/fast
 
 icp.o: icp.cu.o
@@ -134,7 +134,7 @@ icp.o: icp.cu.o
 
 # target to build an object file
 icp.cu.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/icp_gpu_priority.dir/build.make CMakeFiles/icp_gpu_priority.dir/icp.cu.o
+	$(MAKE) $(MAKESILENT) -f -lineinfo CMakeFiles/icp_gpu_priority.dir/build.make CMakeFiles/icp_gpu_priority.dir/icp.cu.o
 .PHONY : icp.cu.o
 
 icp.i: icp.cu.i
@@ -142,7 +142,7 @@ icp.i: icp.cu.i
 
 # target to preprocess a source file
 icp.cu.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/icp_gpu_priority.dir/build.make CMakeFiles/icp_gpu_priority.dir/icp.cu.i
+	$(MAKE) $(MAKESILENT) -f -lineinfo CMakeFiles/icp_gpu_priority.dir/build.make CMakeFiles/icp_gpu_priority.dir/icp.cu.i
 .PHONY : icp.cu.i
 
 icp.s: icp.cu.s
@@ -150,7 +150,7 @@ icp.s: icp.cu.s
 
 # target to generate assembly for a file
 icp.cu.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/icp_gpu_priority.dir/build.make CMakeFiles/icp_gpu_priority.dir/icp.cu.s
+	$(MAKE) $(MAKESILENT) -f -lineinfo CMakeFiles/icp_gpu_priority.dir/build.make CMakeFiles/icp_gpu_priority.dir/icp.cu.s
 .PHONY : icp.cu.s
 
 # Help Target
