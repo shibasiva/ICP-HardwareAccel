@@ -1,1 +1,5 @@
 Semantic3D/
+Fast-Robust-ICP/
+ICPCUDA/
+icp_gpu/cuPCL/
+test/ply_test/venv/
