@@ -35,15 +35,13 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 }
 
 
-// #pragma diag_suppress 20012
-// add in cmd to supress eigen warnings
-//--diag-suppress 20012
 using namespace std;
 using namespace Eigen;
 using namespace pcl;
 
 void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, map<int, bool>& edge_points);
 
+//https://github.com/NVIDIA-AI-IOT/cuPCL/blob/main/cuOctree/main.cpp
 void GetInfo(void)
 {
     cudaDeviceProp prop;
@@ -137,6 +135,7 @@ void NearestNeighborSearch(
 //map the source onto the reference
 void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, map<int, bool>& edge_points)
 {   
+    //following from this code: https://github.com/NVIDIA-AI-IOT/cuPCL/blob/main/cuOctree/main.cpp
     chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
     chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
     chrono::duration<double, std::ratio<1, 1000>> time_span =
@@ -151,7 +150,6 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, 
 
     t1 = chrono::steady_clock::now();
 
-    // //following from this code: https://github.com/NVIDIA-AI-IOT/cuPCL/blob/main/cuOctree/main.cpp
     int regular_priority = 2;
     int higher_priority = 1;
 
@@ -208,9 +206,8 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, 
 
         int num_previous_matched_edges = edge_matched_indices.size();
         int num_previous_matched_nonedges = nonedge_matched_indices.size();
-
-        // cout <<"edge vector size: " << num_previous_matched_edges << endl;
-        // cout <<"nonedge vector size: " << num_previous_matched_nonedges << endl;
+        
+        //create two data streams; one for a list of edge matched indices to search for and another for nonedge
         float* previous_matched_edges = NULL;
         float* previous_edge_ptr = (float *)edge_matched_indices.data();
         int *edge_matched_indices_results;
@@ -250,9 +247,6 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, 
         int *matched_indices_results;
         float *matched_distances_results;
 
-        // for(int temp = 0; temp < num_previous_matched_nonedges; temp++){
-        //     cout << *((unsigned int*)previous_non_edges_ptr + temp)<<endl;
-        // }
         if(num_previous_matched_nonedges > 0){
             // cout<<"copying over nonedges"<<endl;
             gpuErrchk(cudaMallocManaged(&previous_matched_nonedges, sizeof(float) * num_previous_matched_nonedges, cudaMemAttachHost));
@@ -297,8 +291,9 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, 
         
         bool stop_adding_to_matrix = false;
         for(int i = 0; i < num_previous_matched_edges + num_previous_matched_nonedges; i++){
+
+            //stop adding to pose matrix if we have collected enough matched edge points
             if(num_edge_matched > nDstCount * w){
-                // cout<<"num edge matched > threshold: " << num_edge_matched << endl;
                 stop_adding_to_matrix = true;
             }
             int matched_index = 0;
@@ -344,17 +339,13 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, 
             }
             
         }
-        // cout<<"edge matched points using: " << num_edge_matched << endl;
-        // cout<<"matrix using: " << num_points << endl;
+
         edge_matched_indices = new_edge_matched;
         nonedge_matched_indices = new_nonedge_matched;
 
         source_cloud_matrix = source_cloud_matrix(seqN(0,3), seqN(0,num_previous_matched_edges + num_previous_matched_nonedges));
         matched_cloud_matrix = matched_cloud_matrix(seqN(0,3), seqN(0,num_previous_matched_edges + num_previous_matched_nonedges));
-        // for(int i = 0; i < nCount; i ++) {
-        //     rms += matched_distances[i]; 
-        // }
-        // rms /= nCount;
+
         rms = sqrt(rms/num_points);
         cout<<"rms: " <<rms<<endl;
         if(rms < convergence_criteria || abs(old_rms - rms) < rms_diff){
@@ -374,16 +365,6 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference, 
         }
         
         old_rms = rms;
-        //cout<<"size of indices: " << sizeof(matched_indices)/sizeof(matched_indices[0])<<endl;
-        // for(int i = 0; i < nCount; i++){
-        //     cout <<  *(matched_indices + i) << " ";
-        // }
-        // cout << endl;
-
-        // for(int i = 0; i < nCount; i++){
-        //     cout <<  *(matched_distances + i) << " ";
-        // }
-        // cout << endl;
 
         // cin.get();   
 

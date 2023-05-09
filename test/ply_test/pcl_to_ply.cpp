@@ -32,7 +32,7 @@ int main(int argc, char** argv){
                 return (-1);
             }
             
-            //https://stackoverflow.com/questions/34400656/how-can-i-compute-a-normal-for-each-point-in-cloud
+            // https://pcl.readthedocs.io/en/latest/normal_estimation.html
             NormalEstimation<PointXYZ, Normal> ne;
             ne.setInputCloud (source);
 

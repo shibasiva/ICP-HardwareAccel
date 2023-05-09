@@ -41,8 +41,6 @@ void edge_detection(PointCloud<PointXYZ>::Ptr reference, PointCloud<PointXYZ>::P
     }
 
     //https://stackoverflow.com/questions/6406356/how-to-write-vector-values-to-a-file
-
-    // std::vector<std::string> example { "This", "is", "a", "test" };
     std::ofstream output_file(name);
 
     std::ostream_iterator<std::string> output_iterator(output_file, "\n");  

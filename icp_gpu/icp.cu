@@ -43,6 +43,7 @@ using namespace pcl;
 
 void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference);
 
+//https://github.com/NVIDIA-AI-IOT/cuPCL/blob/main/cuOctree/main.cpp
 void GetInfo(void)
 {
     cudaDeviceProp prop;
@@ -117,6 +118,7 @@ void NearestNeighborSearch(float* source, float* reference, int source_len, int 
 //map the source onto the reference
 void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
 {   
+    // //following from this code: https://github.com/NVIDIA-AI-IOT/cuPCL/blob/main/cuOctree/main.cpp
     chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
     chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
     chrono::duration<double, std::ratio<1, 1000>> time_span =
@@ -128,7 +130,7 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
 
     Matrix3f total_rotation = Matrix3f::Identity();
     Vector3f total_translation = Vector3f::Zero();
-    // //following from this code: https://github.com/NVIDIA-AI-IOT/cuPCL/blob/main/cuOctree/main.cpp
+    
     cudaStream_t stream = NULL;
     cudaStreamCreate ( &stream );
     
@@ -138,29 +140,6 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
 
     unsigned int nDstCount = source->width * source->height;
     float *sourceData = (float *)source->points.data();
-
-    // cout<<"input data size: " << nCount << endl;
-    // cout<<"output data size: " << nDstCount << endl;
-    // cout<<"reference data:"<<endl;
-    // // cout<<referenceData<<endl;
-    // cout<<referenceData[0]<<endl;
-    // cout<<referenceData[1]<<endl;
-    // cout<<referenceData[2]<<endl;
-    // cout<<referenceData[3]<<endl;
-    // cout<<referenceData[4]<<endl;
-    // cout<<referenceData[5]<<endl;
-    // cout<<referenceData[6]<<endl;
-    // cout<<referenceData[7]<<endl;
-
-    // cout<<"sourceData"<<endl;
-    // cout<<sourceData[0]<<endl;
-    // cout<<sourceData[1]<<endl;
-    // cout<<sourceData[2]<<endl;
-    // cout<<sourceData[3]<<endl;
-    // cout<<sourceData[4]<<endl;
-    // cout<<sourceData[5]<<endl;
-    // cout<<sourceData[6]<<endl;
-    // cout<<sourceData[7]<<endl;
 
     t1 = chrono::steady_clock::now(); //time from loading in point clouds into GPU
 
@@ -191,11 +170,6 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
         // cout<<"source cloud size: "<< source->points.size()<<endl;
         MatrixXf source_cloud_matrix(3, source->points.size()); //X
         MatrixXf matched_cloud_matrix(3, source->points.size()); //P
-
-        //for every point in the source, find the closest point in the reference
-        //calculate the center of mass
-        //break if rms is low enough
-        
         
         int *matched_indices;
         gpuErrchk(cudaMallocManaged(&matched_indices, sizeof(int) * nCount, cudaMemAttachHost));
@@ -224,17 +198,6 @@ void ICP(PointCloud<PointXYZ>::Ptr source, PointCloud<PointXYZ>::Ptr reference)
             cout<<"final rms: " <<rms<<endl;
             break;
         }
-        
-        //cout<<"size of indices: " << sizeof(matched_indices)/sizeof(matched_indices[0])<<endl;
-        // for(int i = 0; i < nCount; i++){
-        //     cout <<  *(matched_indices + i) << " ";
-        // }
-        // cout << endl;
-
-        // for(int i = 0; i < nCount; i++){
-        //     cout <<  *(matched_distances + i) << " ";
-        // }
-        // cout << endl;
 
         // cin.get();   
 

@@ -15,6 +15,7 @@
         "random": "cpp",
         "tuple": "cpp",
         "map": "cpp",
-        "chrono": "cpp"
+        "chrono": "cpp",
+        "hash_map": "cpp"
     }
 }

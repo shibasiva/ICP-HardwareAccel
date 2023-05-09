@@ -48,7 +48,7 @@ void random_transform_cloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, string fi
     transform.block<3,1>(0,3) = translation_vector;
 
     //apply transform
-    transformPointCloud (*cloud, *cloud, transform); //TODO: check if this is actually correct
+    transformPointCloud (*cloud, *cloud, transform);
 
     //https://stackoverflow.com/questions/14265581/parse-split-a-string-in-c-using-string-delimiter-standard-c  
     string filename = file.substr(0, file.find(".pcd"));
